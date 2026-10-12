@@ -89,4 +89,85 @@ router.post('/login', (req, res) => {
   res.status(400).json({ error: 'Invalid login role requested' });
 });
 
+// Register new food donor
+router.post('/register-donor', (req, res) => {
+  const { name, type, email, phone, locationId, address, contactPerson, fssaiLicense, description } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Donor or business name is required.' });
+  }
+  if (!email || !email.trim()) {
+    return res.status(400).json({ error: 'Email address is required.' });
+  }
+
+  // Check duplicate email
+  const existing = repo.getAllDonors().find(d => d.email.toLowerCase() === email.trim().toLowerCase());
+  if (existing) {
+    return res.status(400).json({ error: 'A donor with this email already exists.' });
+  }
+
+  const newDonor = repo.addDonor({
+    name: name.trim(),
+    type: type || 'Restaurant',
+    email: email.trim().toLowerCase(),
+    phone: phone || '+91 98450 99999',
+    locationId: locationId || 'LOC_01',
+    address: address || 'City Sector Commercial Hub',
+    contactPerson: contactPerson || name.trim(),
+    fssaiLicense: fssaiLicense || `FSSAI-${Math.floor(10000000000000 + Math.random() * 90000000000000)}`,
+    avatar: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=150&auto=format&fit=crop&q=80',
+    description: description || 'Registered commercial surplus food donor.'
+  });
+
+  res.status(201).json({
+    token: `mock-token-${newDonor.id}`,
+    user: {
+      ...newDonor,
+      role: 'DONOR'
+    },
+    message: 'Food donor registered successfully!'
+  });
+});
+
+// Register new recipient shelter
+router.post('/register-recipient', (req, res) => {
+  const { name, category, email, phone, locationId, address, capacity, coordinator } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ error: 'Shelter or organization name is required.' });
+  }
+  if (!email || !email.trim()) {
+    return res.status(400).json({ error: 'Email address is required.' });
+  }
+
+  // Check duplicate email
+  const existing = repo.getAllRecipients().find(r => r.email.toLowerCase() === email.trim().toLowerCase());
+  if (existing) {
+    return res.status(400).json({ error: 'A recipient shelter with this email already exists.' });
+  }
+
+  const newRecipient = repo.addRecipient({
+    name: name.trim(),
+    category: category || 'Community Shelter',
+    email: email.trim().toLowerCase(),
+    phone: phone || '+91 97400 99999',
+    locationId: locationId || 'LOC_04',
+    address: address || 'Community Center Lane',
+    capacity: parseInt(capacity, 10) || 50,
+    coordinator: coordinator || name.trim(),
+    verified: true,
+    avatar: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=150&auto=format&fit=crop&q=80'
+  });
+
+  res.status(201).json({
+    token: `mock-token-${newRecipient.id}`,
+    user: {
+      ...newRecipient,
+      role: 'RECIPIENT'
+    },
+    message: 'Recipient shelter registered successfully!'
+  });
+});
+
 module.exports = router;
+

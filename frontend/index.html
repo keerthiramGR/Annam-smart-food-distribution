@@ -165,6 +165,13 @@
           <span>Enter as Food Donor</span>
           <span class="door-arrow">➔</span>
         </button>
+
+        <div class="login-card-footer">
+          <span>New food provider?</span>
+          <button type="button" class="btn-register-link" id="btnOpenRegisterDonor">
+            + Create Donor Account
+          </button>
+        </div>
       </div>
 
       <!-- DOOR 2: RECIPIENT LOGIN -->
@@ -197,6 +204,13 @@
           <span>Enter as Recipient Shelter</span>
           <span class="door-arrow">➔</span>
         </button>
+
+        <div class="login-card-footer">
+          <span>New shelter or community NGO?</span>
+          <button type="button" class="btn-register-link" id="btnOpenRegisterRecip">
+            + Create Shelter Account
+          </button>
+        </div>
       </div>
 
       <!-- DOOR 3: SUPER ADMIN LOGIN -->
@@ -902,8 +916,175 @@
     </div>
   </div>
 
+  <!-- ========================================================
+       MODAL 4: NEW FOOD DONOR REGISTRATION MODAL
+       ======================================================== -->
+  <div class="modal-backdrop" id="modalRegisterDonor">
+    <div class="modal-card" style="max-width: 620px;">
+      <button class="modal-close-btn" id="btnCloseRegDonorModal">&times;</button>
+      <div class="card-header">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <div class="modal-title-icon green">👨‍🍳</div>
+          <div>
+            <h3 class="card-title" style="color:var(--text-main);">Register as New Food Donor</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">Create a provider account to list surplus food for community shelters</p>
+          </div>
+        </div>
+      </div>
+
+      <form id="formRegisterDonor">
+        <div class="form-group">
+          <label class="form-label" for="regDonorName">Organization / Restaurant Name <span class="req">*</span></label>
+          <input class="form-control" type="text" id="regDonorName" placeholder="e.g. Taj Gateway Banquets & Catering" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regDonorType">Provider Type <span class="req">*</span></label>
+            <select class="form-control" id="regDonorType" required>
+              <option value="Restaurant">Restaurant</option>
+              <option value="Luxury Hotel & Banquets">Luxury Hotel & Banquets</option>
+              <option value="Educational Institution">Educational Canteen</option>
+              <option value="Bakery & Confectionery">Bakery & Confectionery</option>
+              <option value="Catering & Social Kitchen">Catering & Social Kitchen</option>
+              <option value="Corporate Cafeteria">Corporate Cafeteria</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regDonorLocation">Pickup Sector (Graph Node) <span class="req">*</span></label>
+            <select class="form-control" id="regDonorLocation" required></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regDonorEmail">Official Email <span class="req">*</span></label>
+            <input class="form-control" type="email" id="regDonorEmail" placeholder="e.g. food@gateway.org" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regDonorPhone">Contact Phone <span class="req">*</span></label>
+            <input class="form-control" type="tel" id="regDonorPhone" placeholder="e.g. +91 98450 67890" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regDonorContact">Chef / Manager Name <span class="req">*</span></label>
+            <input class="form-control" type="text" id="regDonorContact" placeholder="e.g. Chef Sanjeev Verma" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regDonorFssai">FSSAI License # <span class="req">*</span></label>
+            <input class="form-control" type="text" id="regDonorFssai" placeholder="e.g. FSSAI-22334455667788" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regDonorAddress">Street Address & Landmark <span class="req">*</span></label>
+          <input class="form-control" type="text" id="regDonorAddress" placeholder="e.g. 55 Heritage Crossroad, North Sector" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regDonorDesc">Specialty / Food Types Donated</label>
+          <textarea class="form-control" id="regDonorDesc" rows="2" placeholder="e.g. Buffet surplus, wholesome lunch combos, dinner bread rolls"></textarea>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+          <button type="button" class="btn-secondary" style="flex:1;" id="btnCancelRegDonor">Cancel</button>
+          <button type="submit" class="btn-primary" style="flex:2; background:var(--gradient-donor);">
+            <span>✓ Complete Registration & Enter</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 5: NEW RECIPIENT SHELTER REGISTRATION MODAL
+       ======================================================== -->
+  <div class="modal-backdrop" id="modalRegisterRecip">
+    <div class="modal-card" style="max-width: 620px;">
+      <button class="modal-close-btn" id="btnCloseRegRecipModal">&times;</button>
+      <div class="card-header">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <div class="modal-title-icon amber">🏠</div>
+          <div>
+            <h3 class="card-title" style="color:var(--text-main);">Register as Recipient Shelter</h3>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem;">Join as a verified NGO, orphanage, or food pantry to receive surplus food</p>
+          </div>
+        </div>
+      </div>
+
+      <form id="formRegisterRecip">
+        <div class="form-group">
+          <label class="form-label" for="regRecipName">Shelter / Organization Name <span class="req">*</span></label>
+          <input class="form-control" type="text" id="regRecipName" placeholder="e.g. Sanjeevani Care Children Home" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regRecipCategory">Category <span class="req">*</span></label>
+            <select class="form-control" id="regRecipCategory" required>
+              <option value="Homeless Shelter">Homeless Shelter</option>
+              <option value="Orphanage & Child Welfare">Orphanage & Child Welfare</option>
+              <option value="Elderly Care">Elderly Care</option>
+              <option value="Community Center">Community Center</option>
+              <option value="Food Pantry">Food Pantry</option>
+              <option value="Women's Shelter">Women's Shelter</option>
+              <option value="Migrant Support Hub">Migrant Support Hub</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regRecipLocation">Receiving Sector (Graph Node) <span class="req">*</span></label>
+            <select class="form-control" id="regRecipLocation" required></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regRecipEmail">Official Email <span class="req">*</span></label>
+            <input class="form-control" type="email" id="regRecipEmail" placeholder="e.g. help@sanjeevani.org" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regRecipPhone">Contact Phone <span class="req">*</span></label>
+            <input class="form-control" type="tel" id="regRecipPhone" placeholder="e.g. +91 97400 55443" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="regRecipCoordinator">Coordinator / Director Name <span class="req">*</span></label>
+            <input class="form-control" type="text" id="regRecipCoordinator" placeholder="e.g. Meenakshi Sundaram" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="regRecipCapacity">Daily Beneficiary Count (Portions) <span class="req">*</span></label>
+            <input class="form-control" type="number" id="regRecipCapacity" min="5" max="1500" value="70" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="regRecipAddress">Delivery Street Address & Receiving Dock <span class="req">*</span></label>
+          <input class="form-control" type="text" id="regRecipAddress" placeholder="e.g. 14 River Road, Sector East" required />
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+          <button type="button" class="btn-secondary" style="flex:1;" id="btnCancelRegRecip">Cancel</button>
+          <button type="submit" class="btn-primary" style="flex:2; background:var(--gradient-recip);">
+            <span>✓ Complete Registration & Enter</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
 
   <!-- Application Scripts -->
   <script src="js/api.js"></script>

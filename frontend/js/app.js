@@ -130,6 +130,185 @@ class App {
         this.roadVisualizer?.calculateCurrentRoute();
       });
     }
+
+    // --- Registration Modals Trigger & Handling ---
+    const btnOpenRegDonor = document.getElementById('btnOpenRegisterDonor');
+    const btnCloseRegDonor = document.getElementById('btnCloseRegDonorModal');
+    const btnCancelRegDonor = document.getElementById('btnCancelRegDonor');
+
+    const btnOpenRegRecip = document.getElementById('btnOpenRegisterRecip');
+    const btnCloseRegRecip = document.getElementById('btnCloseRegRecipModal');
+    const btnCancelRegRecip = document.getElementById('btnCancelRegRecip');
+
+    if (btnOpenRegDonor) {
+      btnOpenRegDonor.addEventListener('click', () => {
+        this.openRegisterModal('DONOR');
+      });
+    }
+    if (btnCloseRegDonor) {
+      btnCloseRegDonor.addEventListener('click', () => {
+        this.closeRegisterModal('DONOR');
+      });
+    }
+    if (btnCancelRegDonor) {
+      btnCancelRegDonor.addEventListener('click', () => {
+        this.closeRegisterModal('DONOR');
+      });
+    }
+
+    if (btnOpenRegRecip) {
+      btnOpenRegRecip.addEventListener('click', () => {
+        this.openRegisterModal('RECIPIENT');
+      });
+    }
+    if (btnCloseRegRecip) {
+      btnCloseRegRecip.addEventListener('click', () => {
+        this.closeRegisterModal('RECIPIENT');
+      });
+    }
+    if (btnCancelRegRecip) {
+      btnCancelRegRecip.addEventListener('click', () => {
+        this.closeRegisterModal('RECIPIENT');
+      });
+    }
+
+    // Donor Registration Form Submit
+    const formRegDonor = document.getElementById('formRegisterDonor');
+    if (formRegDonor) {
+      formRegDonor.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleDonorRegistration();
+      });
+    }
+
+    // Recipient Registration Form Submit
+    const formRegRecip = document.getElementById('formRegisterRecip');
+    if (formRegRecip) {
+      formRegRecip.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await this.handleRecipientRegistration();
+      });
+    }
+  }
+
+  async openRegisterModal(role) {
+    await this.populateRegistrationLocationDropdowns();
+    if (role === 'DONOR') {
+      const modal = document.getElementById('modalRegisterDonor');
+      if (modal) modal.classList.add('active');
+    } else if (role === 'RECIPIENT') {
+      const modal = document.getElementById('modalRegisterRecip');
+      if (modal) modal.classList.add('active');
+    }
+  }
+
+  closeRegisterModal(role) {
+    if (role === 'DONOR') {
+      const modal = document.getElementById('modalRegisterDonor');
+      if (modal) modal.classList.remove('active');
+    } else if (role === 'RECIPIENT') {
+      const modal = document.getElementById('modalRegisterRecip');
+      if (modal) modal.classList.remove('active');
+    }
+  }
+
+  async populateRegistrationLocationDropdowns() {
+    try {
+      const locations = await window.api.getLocations();
+      const donorLocSel = document.getElementById('regDonorLocation');
+      const recipLocSel = document.getElementById('regRecipLocation');
+
+      if (locations && locations.length > 0) {
+        const optionsHtml = locations.map(l => `
+          <option value="${l.id}">${l.id}: ${l.name} (${l.sector})</option>
+        `).join('');
+
+        if (donorLocSel && !donorLocSel.hasChildNodes()) {
+          donorLocSel.innerHTML = optionsHtml;
+        }
+        if (recipLocSel && !recipLocSel.hasChildNodes()) {
+          recipLocSel.innerHTML = optionsHtml;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load locations for registration dropdown:', e);
+    }
+  }
+
+  async handleDonorRegistration() {
+    const name = document.getElementById('regDonorName')?.value;
+    const type = document.getElementById('regDonorType')?.value;
+    const locationId = document.getElementById('regDonorLocation')?.value;
+    const email = document.getElementById('regDonorEmail')?.value;
+    const phone = document.getElementById('regDonorPhone')?.value;
+    const contactPerson = document.getElementById('regDonorContact')?.value;
+    const fssaiLicense = document.getElementById('regDonorFssai')?.value;
+    const address = document.getElementById('regDonorAddress')?.value;
+    const description = document.getElementById('regDonorDesc')?.value;
+
+    try {
+      const res = await window.api.registerDonor({
+        name,
+        type,
+        locationId,
+        email,
+        phone,
+        contactPerson,
+        fssaiLicense,
+        address,
+        description
+      });
+
+      this.closeRegisterModal('DONOR');
+      document.getElementById('formRegisterDonor')?.reset();
+      this.showToast(`Welcome ${name}! Your Food Donor account is created.`, 'success');
+
+      // Reload accounts and automatically log in
+      await this.loadAccounts();
+      if (res && res.user) {
+        this.loginAs(res.user, 'DONOR');
+      }
+    } catch (err) {
+      console.error('Donor registration failed:', err);
+      this.showToast(err.message || 'Registration failed. Please check your details.', 'error');
+    }
+  }
+
+  async handleRecipientRegistration() {
+    const name = document.getElementById('regRecipName')?.value;
+    const category = document.getElementById('regRecipCategory')?.value;
+    const locationId = document.getElementById('regRecipLocation')?.value;
+    const email = document.getElementById('regRecipEmail')?.value;
+    const phone = document.getElementById('regRecipPhone')?.value;
+    const coordinator = document.getElementById('regRecipCoordinator')?.value;
+    const capacity = document.getElementById('regRecipCapacity')?.value;
+    const address = document.getElementById('regRecipAddress')?.value;
+
+    try {
+      const res = await window.api.registerRecipient({
+        name,
+        category,
+        locationId,
+        email,
+        phone,
+        coordinator,
+        capacity,
+        address
+      });
+
+      this.closeRegisterModal('RECIPIENT');
+      document.getElementById('formRegisterRecip')?.reset();
+      this.showToast(`Welcome ${name}! Your Shelter account is verified & created.`, 'success');
+
+      // Reload accounts and automatically log in
+      await this.loadAccounts();
+      if (res && res.user) {
+        this.loginAs(res.user, 'RECIPIENT');
+      }
+    } catch (err) {
+      console.error('Recipient registration failed:', err);
+      this.showToast(err.message || 'Registration failed. Please check your details.', 'error');
+    }
   }
 
   async loadAccounts() {

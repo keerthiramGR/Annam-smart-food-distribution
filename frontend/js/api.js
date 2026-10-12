@@ -41,6 +41,14 @@ const api = {
     method: 'POST',
     body: JSON.stringify({ role, id })
   }),
+  registerDonor: (data) => request('/auth/register-donor', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  registerRecipient: (data) => request('/auth/register-recipient', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
 
   // Donations
   getDonations: (params = {}) => {
