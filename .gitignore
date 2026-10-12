@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Java build outputs
+out/
+target/
+*.class
+
+# IDE and Environment
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

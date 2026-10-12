@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annam – Smart Food Distribution and Food Waste Reduction System</title>
+  <meta name="description" content="AI-assisted smart food distribution and waste reduction platform connecting restaurants, hotels, canteens, and bakeries with community shelters and food banks via optimized Dijkstra vehicle routing.">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>🍛</text></svg>">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="header">
+    <div class="header-container">
+      <div class="brand-wrapper" id="brandLogoBtn" title="Return to Home / Gateway">
+        <div class="brand-icon">🍛</div>
+        <div class="brand-title">
+          <span class="brand-name">Annam</span>
+          <span class="brand-tagline">Smart Food Logistics & Distribution</span>
+        </div>
+      </div>
+
+      <!-- Role Switcher (Visible when logged in) -->
+      <nav class="role-nav" id="mainRoleNav" aria-label="Role Switcher" style="display:none;">
+        <button class="role-nav-btn" data-role="DONOR" id="navRoleDonor">
+          <span>👨‍🍳 Food Donor</span>
+          <span class="role-badge">5 Providers</span>
+        </button>
+        <button class="role-nav-btn" data-role="RECIPIENT" id="navRoleRecipient">
+          <span>🏠 Recipient Shelter</span>
+          <span class="role-badge">12 Centers</span>
+        </button>
+        <button class="role-nav-btn" data-role="SUPER_ADMIN" id="navRoleAdmin">
+          <span>🛡️ Super Admin</span>
+          <span class="role-badge">Ops Command</span>
+        </button>
+      </nav>
+
+      <!-- Active User Profile & Actions -->
+      <div class="header-actions">
+        <div class="current-user-card" id="headerProfileBadge" style="display:none;" title="Current Active Persona">
+          <img class="user-avatar" id="headerUserAvatar" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&auto=format&fit=crop&q=80" alt="User Profile" />
+          <div class="user-meta">
+            <span class="user-name" id="headerUserName">Spice Garden Restaurant</span>
+            <span class="user-role-label" id="headerUserRole">DONOR</span>
+          </div>
+        </div>
+
+        <button class="btn-logout" id="btnLogout" style="display:none;" title="Log out to Role Gateway">
+          <span>🚪 Switch / Logout</span>
+        </button>
+
+        <button class="btn-reset-data" id="btnResetData" title="Reset all data to fresh prototype state">
+          <span>🔄 Reset Demo</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Impact & Metrics Strip -->
+  <section class="impact-stats-bar">
+    <div class="stats-container">
+      <div class="stat-item">
+        <div class="stat-icon-wrap green">🥗</div>
+        <div class="stat-content">
+          <span class="stat-value" id="statPortionsDonated">345</span>
+          <span class="stat-label">Total Portions Listed</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon-wrap amber">⚖️</div>
+        <div class="stat-content">
+          <span class="stat-value" id="statKgSaved">138.0 kg</span>
+          <span class="stat-label">Food Rescued</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon-wrap cyan">🌱</div>
+        <div class="stat-content">
+          <span class="stat-value" id="statCo2Saved">345.0 kg</span>
+          <span class="stat-label">CO₂ Prevented</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-icon-wrap indigo">🚚</div>
+        <div class="stat-content">
+          <span class="stat-value" id="statFleetReady">3 / 3</span>
+          <span class="stat-label">Delivery Fleet Ready</span>
+        </div>
+      </div>
+
+      <div style="font-size:0.75rem; color:var(--text-dim); display:flex; align-items:center; gap:0.4rem;">
+        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--primary); box-shadow:0 0 6px var(--primary);"></span>
+        <span>Node.js Routing Engine Active</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       NEW 3-DOOR LOGIN GATEWAY (SHOWN INITIALLY OR UPON LOGOUT)
+       ======================================================== -->
+  <section class="login-gateway-section" id="loginGatewayView">
+    <div class="login-hero">
+      <div class="login-hero-badge">
+        <span>🌾 Welcome to Annam Platform</span>
+      </div>
+      <h1>Smart Food Distribution & Waste Reduction</h1>
+      <p>
+        Connecting commercial food surplus providers with community shelters through automated logistics, vehicle capacity matching, and Dijkstra shortest-path delivery routing.
+      </p>
+    </div>
+
+    <div class="login-cards-grid">
+      <!-- DOOR 1: DONOR LOGIN -->
+      <div class="login-card donor-card">
+        <div class="login-card-header">
+          <div class="login-card-icon">👨‍🍳</div>
+          <div class="login-card-title">
+            <h3>Food Donor Portal</h3>
+            <p>Restaurants, Hotels & Canteens</p>
+          </div>
+        </div>
+
+        <ul class="login-feature-list">
+          <li>List surplus cooked meals & bakery items</li>
+          <li>Set perishability use-by deadlines</li>
+          <li>Specify packaging, condition & pickup sector</li>
+          <li>Track admin approval & distribution status</li>
+        </ul>
+
+        <div class="form-group">
+          <label class="login-select-label" for="loginDonorSelect">Choose Registered Donor (5 Demo Accounts):</label>
+          <select class="form-control" id="loginDonorSelect"></select>
+        </div>
+
+        <button type="button" class="btn-login-door btn-login-donor" id="btnLoginDonor">
+          <span>Enter as Food Donor ➔</span>
+        </button>
+      </div>
+
+      <!-- DOOR 2: RECIPIENT LOGIN -->
+      <div class="login-card recip-card">
+        <div class="login-card-header">
+          <div class="login-card-icon">🏠</div>
+          <div class="login-card-title">
+            <h3>Recipient Shelter Portal</h3>
+            <p>Shelters, Orphanages & Food Banks</p>
+          </div>
+        </div>
+
+        <ul class="login-feature-list">
+          <li>Browse approved fresh surplus donations</li>
+          <li>Sort by nearest donor & earliest use-by time</li>
+          <li>Request portions for verified beneficiaries</li>
+          <li>Track vehicle dispatch & delivery arrival</li>
+        </ul>
+
+        <div class="form-group">
+          <label class="login-select-label" for="loginRecipSelect">Choose Recipient Shelter (12 Demo Accounts):</label>
+          <select class="form-control" id="loginRecipSelect"></select>
+        </div>
+
+        <button type="button" class="btn-login-door btn-login-recip" id="btnLoginRecipient">
+          <span>Enter as Recipient Shelter ➔</span>
+        </button>
+      </div>
+
+      <!-- DOOR 3: SUPER ADMIN LOGIN -->
+      <div class="login-card admin-card">
+        <div class="login-card-header">
+          <div class="login-card-icon">🛡️</div>
+          <div class="login-card-title">
+            <h3>Super Admin Portal</h3>
+            <p>Logistics & Operations Command</p>
+          </div>
+        </div>
+
+        <ul class="login-feature-list">
+          <li>Review and approve food donations</li>
+          <li>Multi-constraint feasibility inspector</li>
+          <li>Dijkstra shortest-route fleet allocation</li>
+          <li>Strict use-by deadline perishability check</li>
+        </ul>
+
+        <div class="form-group">
+          <label class="login-select-label">Administrator Account:</label>
+          <input class="form-control" type="text" value="admin@annam.org (Super Admin)" readonly style="background:#f8fafc;" />
+        </div>
+
+        <button type="button" class="btn-login-door btn-login-admin" id="btnLoginAdmin">
+          <span>Enter as Super Admin ➔</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Dashboard Viewports (Hidden until logged in) -->
+  <main class="main-content" id="appMainContent" style="display:none;">
+
+    <!-- ========================================================
+         VIEW 1: DONOR DASHBOARD
+         ======================================================== -->
+    <div class="dashboard-view" id="viewDonor">
+      <!-- Donor Banner with Persona Quick-Chips -->
+      <div class="section-banner">
+        <div class="banner-left">
+          <img class="banner-avatar" id="donorBannerAvatar" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&auto=format&fit=crop&q=80" alt="Donor Logo" />
+          <div class="banner-info">
+            <h2 id="donorBannerName">Spice Garden Restaurant</h2>
+            <p id="donorBannerDesc">Restaurant • Contact: +91 98450 11223 • 42 Central Boulevard</p>
+            <div class="banner-tags">
+              <span class="tag primary" id="donorBannerFssai">FSSAI Certified</span>
+              <span class="tag" id="donorBannerLoc">Location: LOC_01</span>
+              <span class="tag">Zero Food Waste Partner</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-switch-container">
+          <span class="quick-switch-label">Switch Donor Persona (5 Available):</span>
+          <div class="persona-chips" id="donorPersonaChips"></div>
+        </div>
+      </div>
+
+      <!-- Donor Operations Grid: Upload Form + Donation Inventory -->
+      <div class="donor-layout">
+        <!-- Left: Upload Food Donation Form -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <span>🍲 List Surplus Food Donation</span>
+            </h3>
+            <span class="tag primary">Requires Admin Approval</span>
+          </div>
+
+          <form id="donationUploadForm">
+            <div class="form-group">
+              <label class="form-label" for="foodName">Food Name & Description <span class="req">*</span></label>
+              <input class="form-control" type="text" id="foodName" name="foodName" placeholder="e.g. Paneer Butter Masala & Rice Meals" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="foodCategory">Category <span class="req">*</span></label>
+                <select class="form-control" id="foodCategory" name="category" required>
+                  <option value="Cooked Meals">Cooked Meals</option>
+                  <option value="Bakery & Breads">Bakery & Breads</option>
+                  <option value="Fresh Produce">Fresh Produce</option>
+                  <option value="Dairy & Desserts">Dairy & Desserts</option>
+                  <option value="Packaged Foods">Packaged Foods</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="portionsTotal">Available Portions (Count) <span class="req">*</span></label>
+                <input class="form-control" type="number" id="portionsTotal" name="portionsTotal" min="1" max="500" placeholder="e.g. 50" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Food Photo / Presentation</label>
+              <input class="form-control" type="url" id="foodPhotoUrl" name="photoUrl" placeholder="Image URL or pick sample below" />
+              <div class="preset-photos-strip">
+                <div class="preset-photo-thumb selected" title="Meal Boxes">
+                  <img src="https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=150&auto=format&fit=crop&q=80" alt="Meal" />
+                </div>
+                <div class="preset-photo-thumb" title="Biryani Feast">
+                  <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=150&auto=format&fit=crop&q=80" alt="Biryani" />
+                </div>
+                <div class="preset-photo-thumb" title="Fresh Bakery">
+                  <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=80" alt="Bakery" />
+                </div>
+                <div class="preset-photo-thumb" title="Khichdi / Porridge">
+                  <img src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=150&auto=format&fit=crop&q=80" alt="Khichdi" />
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="qualityCondition">Declared Condition / Quality</label>
+                <select class="form-control" id="qualityCondition" name="qualityCondition">
+                  <option value="Freshly Prepared Hot Food">Freshly Prepared Hot Food</option>
+                  <option value="Pristine Surplus Buffet Food">Pristine Surplus Buffet Food</option>
+                  <option value="Oven-Fresh Today">Oven-Fresh Today</option>
+                  <option value="Fresh Lunch Surplus">Fresh Lunch Surplus</option>
+                  <option value="Hygienically Packed Safe Food">Hygienically Packed Safe Food</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="foodPickupLocation">Pickup Location Sector <span class="req">*</span></label>
+                <select class="form-control" id="foodPickupLocation" name="pickupLocationId" required>
+                  <option value="LOC_01">LOC_01 - Central City Center</option>
+                  <option value="LOC_02">LOC_02 - Downtown Commercial Hub</option>
+                  <option value="LOC_03">LOC_03 - North Market Square</option>
+                  <option value="LOC_04">LOC_04 - South Riverside Park</option>
+                  <option value="LOC_05">LOC_05 - East Gate Junction</option>
+                  <option value="LOC_06">LOC_06 - West End District</option>
+                  <option value="LOC_07">LOC_07 - University Campus</option>
+                  <option value="LOC_08">LOC_08 - Grand Avenue Boulevard</option>
+                  <option value="LOC_09">LOC_09 - Old Heritage Quarter</option>
+                  <option value="LOC_10">LOC_10 - Midtown Crossway</option>
+                  <option value="LOC_11">LOC_11 - Hill View Enclave</option>
+                  <option value="LOC_12">LOC_12 - Industrial Logistic Zone</option>
+                  <option value="LOC_13">LOC_13 - Suburban Colony West</option>
+                  <option value="LOC_14">LOC_14 - Tech Park Innovation Hub</option>
+                  <option value="LOC_15">LOC_15 - Harbor Port Terminal</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="foodPrepDateTime">Preparation / Availability Time</label>
+                <input class="form-control" type="datetime-local" id="foodPrepDateTime" name="preparationDateTime" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="foodUseByDateTime">Strict Use-By Date & Time <span class="req">*</span></label>
+                <input class="form-control" type="datetime-local" id="foodUseByDateTime" name="useByDateTime" required />
+                <div class="time-presets-strip">
+                  <button type="button" class="time-preset-btn" data-hours="4">+4h</button>
+                  <button type="button" class="time-preset-btn" data-hours="6">+6h</button>
+                  <button type="button" class="time-preset-btn" data-hours="12">+12h</button>
+                  <button type="button" class="time-preset-btn" data-hours="24">+24h</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="foodDietary">Dietary Classification</label>
+                <select class="form-control" id="foodDietary" name="dietary">
+                  <option value="Pure Vegetarian">Pure Vegetarian</option>
+                  <option value="Vegetarian (Eggless)">Vegetarian (Eggless)</option>
+                  <option value="Non-Vegetarian (Halal)">Non-Vegetarian (Halal)</option>
+                  <option value="Mixed Feast">Mixed Feast</option>
+                  <option value="Vegan">Vegan</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="foodStorageReq">Storage Requirement</label>
+                <select class="form-control" id="foodStorageReq" name="storageReq">
+                  <option value="Keep Warm (>65°C)">Keep Warm (>65°C)</option>
+                  <option value="Ambient Room Temp">Ambient Room Temp</option>
+                  <option value="Refrigerated (<5°C)">Refrigerated (<5°C)</option>
+                  <option value="Dry Storage">Dry Storage</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="foodNotes">Additional Packaging / Handling Notes</label>
+              <textarea class="form-control" id="foodNotes" name="notes" rows="2" placeholder="e.g. Packed in food-grade foil containers with disposable cutlery."></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnSubmitDonation">
+              <span>🚀 Submit Food Donation</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: My Donations Inventory -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <span>📋 My Food Donations & Real-Time Status</span>
+            </h3>
+            <button class="btn-sm btn-secondary" onclick="window.donorCtrl.loadMyDonations()">
+              <span>🔄 Refresh</span>
+            </button>
+          </div>
+
+          <div id="donorDonationsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         VIEW 2: RECIPIENT DASHBOARD
+         ======================================================== -->
+    <div class="dashboard-view" id="viewRecipient">
+      <!-- Recipient Banner with 12 Shelters Selector -->
+      <div class="section-banner amber">
+        <div class="banner-left">
+          <img class="banner-avatar" id="recipBannerAvatar" src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=150&auto=format&fit=crop&q=80" alt="Recipient Logo" />
+          <div class="banner-info">
+            <h2 id="recipBannerName">Hope Shelter for Homeless</h2>
+            <p id="recipBannerDesc">Homeless Shelter • Coordinator: Sister Teresa Maria • 12 South Riverside Road</p>
+            <div class="banner-tags">
+              <span class="tag primary" id="recipBannerCap">Capacity: 85 beneficiaries</span>
+              <span class="tag" id="recipBannerLoc">Sector: LOC_04</span>
+              <span class="tag">Verified NGO Partner</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-switch-container">
+          <span class="quick-switch-label">Switch Shelter Persona (12 Available):</span>
+          <div class="persona-chips" id="recipPersonaChips"></div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs: Browse Catalog vs Track Requests -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" id="recipientTabCatalog">
+          <span>🍽️ Available Food Catalog</span>
+        </button>
+        <button class="tab-btn" id="recipientTabBookings">
+          <span>📦 My Food Requests & Delivery Tracking</span>
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Food Catalog -->
+      <div id="recipientCatalogView">
+        <!-- Filter Toolbar -->
+        <div class="filter-toolbar">
+          <div class="filter-group">
+            <select class="filter-select" id="catalogCategoryFilter">
+              <option value="All">All Food Categories</option>
+              <option value="Cooked Meals">Cooked Meals</option>
+              <option value="Bakery & Breads">Bakery & Breads</option>
+              <option value="Fresh Produce">Fresh Produce</option>
+              <option value="Dairy & Desserts">Dairy & Desserts</option>
+              <option value="Packaged Foods">Packaged Foods</option>
+            </select>
+
+            <select class="filter-select" id="catalogLocationFilter">
+              <option value="All">All Pickup Sectors</option>
+              <option value="LOC_01">LOC_01 - Central City Center</option>
+              <option value="LOC_02">LOC_02 - Downtown Commercial Hub</option>
+              <option value="LOC_03">LOC_03 - North Market Square</option>
+              <option value="LOC_04">LOC_04 - South Riverside Park</option>
+              <option value="LOC_05">LOC_05 - East Gate Junction</option>
+              <option value="LOC_06">LOC_06 - West End District</option>
+              <option value="LOC_07">LOC_07 - University Campus</option>
+              <option value="LOC_08">LOC_08 - Grand Avenue Boulevard</option>
+              <option value="LOC_09">LOC_09 - Old Heritage Quarter</option>
+              <option value="LOC_10">LOC_10 - Midtown Crossway</option>
+              <option value="LOC_11">LOC_11 - Hill View Enclave</option>
+              <option value="LOC_12">LOC_12 - Industrial Logistic Zone</option>
+              <option value="LOC_13">LOC_13 - Suburban Colony West</option>
+              <option value="LOC_14">LOC_14 - Tech Park Innovation Hub</option>
+              <option value="LOC_15">LOC_15 - Harbor Port Terminal</option>
+            </select>
+
+            <select class="filter-select" id="catalogSortFilter">
+              <option value="useBy">⏳ Sort: Earliest Use-By (Perishable First)</option>
+              <option value="distance">📍 Sort: Nearest Donor (Dijkstra Distance)</option>
+              <option value="portions">🍲 Sort: Largest Portion Quantity</option>
+            </select>
+          </div>
+
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input class="form-control" type="text" id="catalogSearchInput" placeholder="Search food, dishes, donors..." />
+          </div>
+        </div>
+
+        <!-- Available Donations Grid -->
+        <div class="donations-grid" id="recipientDonationGrid"></div>
+      </div>
+
+      <!-- Tab Content 2: Bookings & Tracking -->
+      <div id="recipientBookingsView" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <span>🚚 My Food Requests & Logistics Status</span>
+            </h3>
+            <button class="btn-sm btn-secondary" onclick="window.recipientCtrl.loadMyBookings()">
+              <span>🔄 Refresh Status</span>
+            </button>
+          </div>
+
+          <div id="recipientBookingsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         VIEW 3: SUPER ADMIN DASHBOARD
+         ======================================================== -->
+    <div class="dashboard-view" id="viewAdmin">
+      <!-- Admin Operations Header Banner -->
+      <div class="section-banner indigo">
+        <div class="banner-left">
+          <div class="brand-icon" style="background:var(--accent-indigo);">🛡️</div>
+          <div class="banner-info">
+            <h2>Super Admin Operations Center</h2>
+            <p>Full Logistics Oversight • Donation & Booking Review • Strict Dijkstra Allocation • Perishability Enforcement</p>
+            <div class="banner-tags">
+              <span class="tag primary">Active Node.js Dispatcher</span>
+              <span class="tag">15 Urban Sectors</span>
+              <span class="tag">3 Fleet Vehicles</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin High-Level KPIs -->
+      <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Total Portions Donated</span>
+          <span class="admin-stat-val" id="adminStatTotalPortions">345</span>
+        </div>
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Portions Distributed</span>
+          <span class="admin-stat-val" style="color:var(--primary);" id="adminStatDistributed">25</span>
+        </div>
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Food Saved from Waste</span>
+          <span class="admin-stat-val" style="color:var(--accent-amber);" id="adminStatKgSaved">10.0 kg</span>
+        </div>
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">CO₂ Emissions Prevented</span>
+          <span class="admin-stat-val" style="color:var(--accent-cyan);" id="adminStatCo2Saved">25.0 kg</span>
+        </div>
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Active Fleet Status</span>
+          <span class="admin-stat-val" id="adminStatFleet">3 / 3 Ready</span>
+        </div>
+        <div class="admin-stat-card">
+          <span class="admin-stat-label">Delivery Distance Logged</span>
+          <span class="admin-stat-val" id="adminStatKm">0.0 km</span>
+        </div>
+      </div>
+
+      <!-- Admin Tabs Navigation -->
+      <div class="tabs-nav">
+        <button class="tab-btn admin-nav-tab active" data-target="tabAdminDonations">
+          <span>🥗 Donation Approval Queue</span>
+        </button>
+        <button class="tab-btn admin-nav-tab" data-target="tabAdminBookings">
+          <span>⚡ Booking Allocation Wizard</span>
+        </button>
+        <button class="tab-btn admin-nav-tab" data-target="tabAdminFleet">
+          <span>🚚 Fleet & Vehicle Tracking</span>
+        </button>
+        <button class="tab-btn admin-nav-tab" data-target="tabAdminEntities">
+          <span>🏢 Entity Directory (5 Donors, 12 Shelters)</span>
+        </button>
+        <button class="tab-btn admin-nav-tab" data-target="tabAdminLogs">
+          <span>📜 Audit Trail</span>
+        </button>
+      </div>
+
+      <!-- Admin Tab Pane 1: Donation Approval Queue -->
+      <div class="admin-tab-pane" id="tabAdminDonations">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <span>📋 Food Donations Review Queue</span>
+            </h3>
+            <span style="font-size:0.8rem; color:var(--text-muted);">
+              New donations must be approved by Super Admin before shelters can request them.
+            </span>
+          </div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Food Item</th>
+                  <th>Donor & Sector</th>
+                  <th>Portions</th>
+                  <th>Condition & Dietary</th>
+                  <th>Use-By Deadline</th>
+                  <th>Current Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminDonationsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Tab Pane 2: Booking Allocation Wizard -->
+      <div class="admin-tab-pane hidden" id="tabAdminBookings">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <span>⚡ Recipient Booking Allocation & Feasibility Wizard</span>
+            </h3>
+            <span style="font-size:0.8rem; color:var(--text-muted);">
+              Super Admin validates Portion Stock, Vehicle Capacity, Dijkstra Route, and Perishability Deadline.
+            </span>
+          </div>
+
+          <div id="adminBookingsList"></div>
+        </div>
+      </div>
+
+      <!-- Admin Tab Pane 3: Fleet Tracking -->
+      <div class="admin-tab-pane hidden" id="tabAdminFleet">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <span>🚚 Delivery Vehicles & Driver Management</span>
+            </h3>
+          </div>
+          <div class="donations-grid" id="adminFleetGrid"></div>
+        </div>
+      </div>
+
+      <!-- Admin Tab Pane 4: Entities Directory -->
+      <div class="admin-tab-pane hidden" id="tabAdminEntities">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><span>👨‍🍳 Registered Food Donors (5)</span></h3>
+            </div>
+            <div id="adminDonorsList"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><span>🏠 Registered Recipient Shelters (12)</span></h3>
+            </div>
+            <div id="adminRecipientsList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Tab Pane 5: Audit Trail -->
+      <div class="admin-tab-pane hidden" id="tabAdminLogs">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><span>📜 System Audit Trail (Immutable Events)</span></h3>
+          </div>
+          <div id="adminLogsList" style="max-height:450px; overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================
+         SECTION 4: ROAD NETWORK & DIJKSTRA ROUTE EXPLORER
+         (Available across all roles for transparency)
+         ======================================================== -->
+    <section class="graph-section" id="roadGraphSection">
+      <div class="card-header" style="margin-bottom:0.75rem;">
+        <div>
+          <h3 class="card-title">
+            <span>🗺️ Urban Road Graph & Dijkstra Shortest Path Engine</span>
+          </h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem;">
+            15 interconnected city sectors with bidirectional weighted distances and travel times. Click any two nodes or calculate below.
+          </p>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span class="route-pill" style="background:var(--primary-bg); color:var(--primary-dark); border-color:var(--primary-border);">15 Nodes</span>
+          <span class="route-pill">24 Weighted Edges</span>
+        </div>
+      </div>
+
+      <div class="graph-container">
+        <!-- Canvas Visualizer with Live GPS Navigation HUD -->
+        <div class="canvas-wrapper">
+          <!-- Top GPS Navigation HUD -->
+          <div class="gps-hud-top" id="gpsHudTop">
+            <div class="gps-status-badge">
+              <span class="gps-live-dot"></span>
+              <span class="gps-live-text">LIVE GPS TRACKING</span>
+              <span class="gps-satellite-tag">🛰️ GPS LOCKED (±2m)</span>
+            </div>
+            <div class="gps-turn-instruction" id="gpsTurnInstruction">
+              <span class="gps-turn-icon" id="gpsTurnIcon">➔</span>
+              <span id="gpsTurnText">Calculating optimal route...</span>
+            </div>
+            <div class="gps-speed-display" id="gpsSpeedDisplay">
+              <span class="gps-speed-value" id="gpsSpeedValue">42</span>
+              <span class="gps-speed-unit">km/h</span>
+            </div>
+          </div>
+
+          <canvas id="roadGraphCanvas"></canvas>
+
+          <!-- Bottom GPS Trip Progress HUD -->
+          <div class="gps-hud-bottom" id="gpsHudBottom">
+            <div class="gps-controls-row">
+              <button type="button" class="gps-btn-play" id="btnGpsPlayPause" title="Play / Pause GPS simulation">
+                <span id="gpsPlayIcon">⏸</span>
+              </button>
+              <div class="gps-progress-track" id="gpsProgressTrack">
+                <div class="gps-progress-bar" id="gpsProgressBar" style="width: 0%;"></div>
+              </div>
+              <div class="gps-speed-toggles">
+                <button type="button" class="gps-speed-btn active" data-speed="1">1x</button>
+                <button type="button" class="gps-speed-btn" data-speed="2">2x</button>
+                <button type="button" class="gps-speed-btn" data-speed="4">4x</button>
+              </div>
+            </div>
+            <div class="gps-metrics-row">
+              <div class="gps-metric-item">
+                <span class="gps-metric-label">Remaining Distance</span>
+                <span class="gps-metric-val" id="gpsRemainingDist">-- km</span>
+              </div>
+              <div class="gps-metric-item">
+                <span class="gps-metric-label">Est. Time of Arrival</span>
+                <span class="gps-metric-val" id="gpsRemainingTime">-- min</span>
+              </div>
+              <div class="gps-metric-item">
+                <span class="gps-metric-label">Vehicle Assigned</span>
+                <span class="gps-metric-val" id="gpsVehicleName">Eco-Van Alpha</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls & Route Step Breakdown Panel -->
+        <div class="graph-controls-panel">
+          <div style="font-weight:800; font-size:0.95rem; color:var(--text-main);">
+            Route Calculator
+          </div>
+
+          <div class="form-group" style="margin-bottom:0.6rem;">
+            <label class="form-label">Origin Location (Donor / Depot)</label>
+            <select class="form-control" id="routeFromSelect"></select>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0.6rem;">
+            <label class="form-label">Destination Location (Recipient Shelter)</label>
+            <select class="form-control" id="routeToSelect"></select>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0.8rem;">
+            <label class="form-label">Vehicle Assignment</label>
+            <select class="form-control" id="routeVehicleSelect">
+              <option value="">Standard Speed (1.0x)</option>
+              <option value="veh_01">Eco-Van Alpha (1.0x, 60p)</option>
+              <option value="veh_02">City Express Heavy (0.9x, 150p)</option>
+              <option value="veh_03">Rapid Cargo Bike (1.25x, 30p)</option>
+            </select>
+          </div>
+
+          <button class="btn-primary" id="btnCalculateRoute" style="padding:0.65rem;">
+            <span>⚡ Calculate Dijkstra Route</span>
+          </button>
+
+          <!-- Route Results Card -->
+          <div class="route-results-card" id="dijkstraRouteSummary">
+            <div style="font-size:0.8rem; color:var(--text-muted);">
+              Select origin and destination to compute optimal shortest delivery route.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================
+       MODAL 1: RECIPIENT PORTION REQUEST MODAL
+       ======================================================== -->
+  <div class="modal-backdrop" id="bookingModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="window.recipientCtrl.closeBookingModal()">&times;</button>
+      <div class="card-header">
+        <h3 class="card-title">
+          <span>🍽️ Request Food Portions</span>
+        </h3>
+      </div>
+
+      <div style="margin-bottom:1.25rem;">
+        <h4 id="modalDonationFoodName" style="color:var(--primary); font-size:1.15rem;"></h4>
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.25rem;">
+          Offered by: <strong id="modalDonationDonor" style="color:var(--text-main);"></strong> • Available: <strong id="modalDonationRemaining" style="color:var(--primary);"></strong> portions
+        </div>
+      </div>
+
+      <div id="modalRoutePreview" style="margin-bottom:1.25rem; padding:0.75rem; background:var(--bg-primary); border-radius:var(--radius-sm); border:1px solid var(--border-light);"></div>
+
+      <form id="bookingRequestForm">
+        <div class="form-group">
+          <label class="form-label" for="modalPortionsInput">Number of Portions Needed <span class="req">*</span></label>
+          <input class="form-control" type="number" id="modalPortionsInput" name="portions" min="1" max="100" required />
+          <div class="form-help">Must not exceed available remaining portion stock.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="modalSpecialInstructions">Special Receiving / Kitchen Dock Instructions</label>
+          <textarea class="form-control" id="modalSpecialInstructions" rows="3" placeholder="e.g. Please bring to receiving dock at Gate 2. Staff available until 8 PM."></textarea>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+          <button type="button" class="btn-secondary" style="flex:1;" onclick="window.recipientCtrl.closeBookingModal()">Cancel</button>
+          <button type="submit" class="btn-primary" style="flex:2;">Confirm Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 2: SUPER ADMIN FEASIBILITY INSPECTOR & ALLOCATION
+       ======================================================== -->
+  <div class="modal-backdrop" id="feasibilityModal">
+    <div class="modal-card" style="max-width:700px;">
+      <button class="modal-close-btn" onclick="window.adminCtrl.closeFeasibilityModal()">&times;</button>
+      <div class="card-header">
+        <h3 class="card-title">
+          <span>⚡ Multi-Constraint Allocation Inspector</span>
+        </h3>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1.25rem; font-size:0.85rem;">
+        <div>Booking ID: <strong id="fezbBookingId" style="color:var(--text-main);"></strong></div>
+        <div>Demand: <strong id="fezbDemand" style="color:var(--primary);"></strong></div>
+        <div>Recipient: <strong id="fezbRecipient" style="color:var(--text-main);"></strong></div>
+        <div>Food: <strong id="fezbDonation" style="color:var(--text-main);"></strong></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="evalVehicleSelect">Assign Transport Vehicle <span class="req">*</span></label>
+        <select class="form-control" id="evalVehicleSelect"></select>
+      </div>
+
+      <div style="display:flex; gap:0.75rem; margin-bottom:1.25rem;">
+        <button type="button" class="btn-primary" style="padding:0.6rem;" onclick="window.adminCtrl.runFeasibilitySimulation()">
+          <span>🔍 Run Feasibility Simulation</span>
+        </button>
+      </div>
+
+      <!-- Simulation Output Container -->
+      <div id="fezbResultsArea"></div>
+
+      <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+        <button type="button" class="btn-secondary" style="flex:1;" onclick="window.adminCtrl.closeFeasibilityModal()">Close</button>
+        <button type="button" class="btn-primary" id="btnConfirmAllocation" style="flex:2;" disabled onclick="window.adminCtrl.confirmAllocation()">
+          ✓ Approve & Allocate Delivery
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 3: ADMIN REJECTION REASON MODAL
+       ======================================================== -->
+  <div class="modal-backdrop" id="rejectModal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="window.adminCtrl.closeRejectModal()">&times;</button>
+      <div class="card-header">
+        <h3 class="card-title" style="color:var(--accent-rose);">
+          <span>✗ Reject Entity</span>
+        </h3>
+      </div>
+
+      <form id="adminRejectForm">
+        <input type="hidden" id="rejectEntityType" />
+        <input type="hidden" id="rejectEntityId" />
+
+        <div class="form-group">
+          <label class="form-label" for="rejectReasonInput">Rejection Reason / Justification <span class="req">*</span></label>
+          <textarea class="form-control" id="rejectReasonInput" rows="3" placeholder="Provide clear reason (e.g. Perishability deadline violation, packaging integrity failure, etc.)" required></textarea>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+          <button type="button" class="btn-secondary" style="flex:1;" onclick="window.adminCtrl.closeRejectModal()">Cancel</button>
+          <button type="submit" class="btn-danger" style="flex:2;">Confirm Rejection</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Application Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/graph-visualizer.js"></script>
+  <script src="js/donor.js"></script>
+  <script src="js/recipient.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
