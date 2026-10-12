@@ -105,31 +105,55 @@
        ======================================================== -->
   <section class="login-gateway-section" id="loginGatewayView">
     <div class="login-hero">
-      <div class="login-hero-badge">
-        <span>🌾 Welcome to Annam Platform</span>
+      <div class="hero-live-pill">
+        <span class="live-dot-pulse"></span>
+        <span>AI-Assisted Redistribution • Dijkstra Shortest Route • Zero Waste</span>
       </div>
-      <h1>Smart Food Distribution & Waste Reduction</h1>
-      <p>
+      <h1 class="hero-title-gradient">Smart Food Distribution & Waste Reduction</h1>
+      <p class="hero-subtitle">
         Connecting commercial food surplus providers with community shelters through automated logistics, vehicle capacity matching, and Dijkstra shortest-path delivery routing.
       </p>
+
+      <div class="hero-highlight-chips">
+        <div class="hero-chip">
+          <span class="chip-icon">⚡</span>
+          <span>Instant Portion Matching</span>
+        </div>
+        <div class="hero-chip">
+          <span class="chip-icon">🗺️</span>
+          <span>15-Sector Road Graph</span>
+        </div>
+        <div class="hero-chip">
+          <span class="chip-icon">🛡️</span>
+          <span>Perishability Safeguard</span>
+        </div>
+        <div class="hero-chip">
+          <span class="chip-icon">🚚</span>
+          <span>Live Vehicle Dispatch</span>
+        </div>
+      </div>
     </div>
 
     <div class="login-cards-grid">
       <!-- DOOR 1: DONOR LOGIN -->
       <div class="login-card donor-card">
+        <div class="card-ambient-glow donor-glow"></div>
         <div class="login-card-header">
           <div class="login-card-icon">👨‍🍳</div>
           <div class="login-card-title">
-            <h3>Food Donor Portal</h3>
-            <p>Restaurants, Hotels & Canteens</p>
+            <div class="title-with-pill">
+              <h3>Food Donor Portal</h3>
+              <span class="role-pill pill-donor">5 Providers</span>
+            </div>
+            <p>Restaurants, Luxury Hotels, Canteens & Bakeries</p>
           </div>
         </div>
 
         <ul class="login-feature-list">
-          <li>List surplus cooked meals & bakery items</li>
-          <li>Set perishability use-by deadlines</li>
-          <li>Specify packaging, condition & pickup sector</li>
-          <li>Track admin approval & distribution status</li>
+          <li><span class="feat-check">✓</span> List surplus cooked meals & bakery items</li>
+          <li><span class="feat-check">✓</span> Set strict perishability use-by deadlines</li>
+          <li><span class="feat-check">✓</span> Specify packaging, food condition & pickup sector</li>
+          <li><span class="feat-check">✓</span> Real-time admin review & allocation updates</li>
         </ul>
 
         <div class="form-group">
@@ -138,25 +162,30 @@
         </div>
 
         <button type="button" class="btn-login-door btn-login-donor" id="btnLoginDonor">
-          <span>Enter as Food Donor ➔</span>
+          <span>Enter as Food Donor</span>
+          <span class="door-arrow">➔</span>
         </button>
       </div>
 
       <!-- DOOR 2: RECIPIENT LOGIN -->
       <div class="login-card recip-card">
+        <div class="card-ambient-glow recip-glow"></div>
         <div class="login-card-header">
           <div class="login-card-icon">🏠</div>
           <div class="login-card-title">
-            <h3>Recipient Shelter Portal</h3>
-            <p>Shelters, Orphanages & Food Banks</p>
+            <div class="title-with-pill">
+              <h3>Recipient Shelter Portal</h3>
+              <span class="role-pill pill-recip">12 Shelters</span>
+            </div>
+            <p>Shelters, Orphanages, Elderly Homes & Food Banks</p>
           </div>
         </div>
 
         <ul class="login-feature-list">
-          <li>Browse approved fresh surplus donations</li>
-          <li>Sort by nearest donor & earliest use-by time</li>
-          <li>Request portions for verified beneficiaries</li>
-          <li>Track vehicle dispatch & delivery arrival</li>
+          <li><span class="feat-check">✓</span> Browse approved fresh surplus donations</li>
+          <li><span class="feat-check">✓</span> Sort by nearest donor & earliest use-by time</li>
+          <li><span class="feat-check">✓</span> Request portions for verified beneficiaries</li>
+          <li><span class="feat-check">✓</span> Live delivery dispatch & ETA tracker</li>
         </ul>
 
         <div class="form-group">
@@ -165,25 +194,30 @@
         </div>
 
         <button type="button" class="btn-login-door btn-login-recip" id="btnLoginRecipient">
-          <span>Enter as Recipient Shelter ➔</span>
+          <span>Enter as Recipient Shelter</span>
+          <span class="door-arrow">➔</span>
         </button>
       </div>
 
       <!-- DOOR 3: SUPER ADMIN LOGIN -->
       <div class="login-card admin-card">
+        <div class="card-ambient-glow admin-glow"></div>
         <div class="login-card-header">
           <div class="login-card-icon">🛡️</div>
           <div class="login-card-title">
-            <h3>Super Admin Portal</h3>
-            <p>Logistics & Operations Command</p>
+            <div class="title-with-pill">
+              <h3>Super Admin Portal</h3>
+              <span class="role-pill pill-admin">Ops Center</span>
+            </div>
+            <p>Unified Logistics Command & Verification</p>
           </div>
         </div>
 
         <ul class="login-feature-list">
-          <li>Review and approve food donations</li>
-          <li>Multi-constraint feasibility inspector</li>
-          <li>Dijkstra shortest-route fleet allocation</li>
-          <li>Strict use-by deadline perishability check</li>
+          <li><span class="feat-check">✓</span> Review & approve food batches with 1-click</li>
+          <li><span class="feat-check">✓</span> Multi-constraint feasibility inspector</li>
+          <li><span class="feat-check">✓</span> Dijkstra shortest-route fleet allocation</li>
+          <li><span class="feat-check">✓</span> Strict use-by deadline perishability check</li>
         </ul>
 
         <div class="form-group">
@@ -192,7 +226,8 @@
         </div>
 
         <button type="button" class="btn-login-door btn-login-admin" id="btnLoginAdmin">
-          <span>Enter as Super Admin ➔</span>
+          <span>Enter as Super Admin</span>
+          <span class="door-arrow">➔</span>
         </button>
       </div>
     </div>
