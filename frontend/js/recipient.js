@@ -264,21 +264,53 @@ class RecipientController {
     document.getElementById('modalPortionsInput').max = don.portionsRemaining;
     document.getElementById('modalPortionsInput').value = Math.min(25, don.portionsRemaining);
 
-    // Route info display
+    // Live Dijkstra Route Calculation for Order Preview
     const recipLoc = this.currentRecipient.locationId;
-    const routeInfo = this.distanceCache.get(`${don.pickupLocationId}->${recipLoc}`);
     const routePreviewEl = document.getElementById('modalRoutePreview');
     if (routePreviewEl) {
-      if (routeInfo && routeInfo.found) {
-        routePreviewEl.innerHTML = `
-          <div style="font-size:0.8rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
-            <span>Delivery Route: <strong>${don.pickupLocationId} ➔ ${recipLoc}</strong></span>
-            <span class="route-pill">${routeInfo.totalDistanceKm} km • ~${routeInfo.adjustedTimeMinutes} min transit</span>
-          </div>
-        `;
-      } else {
-        routePreviewEl.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted);">Route will be mapped via Dijkstra on submission.</div>`;
-      }
+      routePreviewEl.innerHTML = `
+        <div style="font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+          <span class="gps-live-dot" style="width:8px; height:8px;"></span>
+          <span>Computing optimal Dijkstra delivery route in Erode...</span>
+        </div>
+      `;
+
+      // Fetch live shortest path
+      window.api.getShortestPath(don.pickupLocationId, recipLoc)
+        .then(route => {
+          if (route && route.found) {
+            routePreviewEl.innerHTML = `
+              <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="font-weight:800; color:#059669; font-size:0.85rem;">⚡ Dijkstra Shortest Path</span>
+                  <span class="route-pill" style="background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; font-weight:700;">
+                    ${route.totalDistanceKm} km • ~${route.adjustedTimeMinutes} min transit
+                  </span>
+                </div>
+                <div style="font-size:0.82rem; color:var(--text-main); font-weight:700; margin-bottom:4px;">
+                  ${don.donorName} (${don.pickupLocationId}) ➔ ${this.currentRecipient.name} (${recipLoc})
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-top:4px;">
+                  <span>Highway Segments:</span>
+                  ${route.nodeNames.map((name, i) => `
+                    <strong style="color:#0f172a;">${name}</strong>
+                    ${i < route.nodeNames.length - 1 ? '<span style="color:#059669;">➔</span>' : ''}
+                  `).join('')}
+                </div>
+              </div>
+            `;
+
+            // Also plot on road map
+            if (window.roadVisualizer) {
+              window.roadVisualizer.highlightRoute(route.path, route.fullCoordinates);
+            }
+          } else {
+            routePreviewEl.innerHTML = `<div style="font-size:0.8rem; color:var(--accent-rose);">No direct road path connects these sectors.</div>`;
+          }
+        })
+        .catch(err => {
+          routePreviewEl.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted);">Route preview unavailable (${err.message}).</div>`;
+        });
     }
 
     modal.classList.add('active');

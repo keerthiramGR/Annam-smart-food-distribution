@@ -380,11 +380,55 @@ class AdminController {
 
       // Highlight on visualizer
       if (res.booking?.routePath && window.roadVisualizer) {
+        window.roadVisualizer.updateVehicleModel(vehicleId);
         window.roadVisualizer.highlightRoute(res.booking.routePath);
       }
+
+      // Show Driver Dispatch Dialog for live location tracking
+      this.showDriverDispatchPrompt(res.booking, vehicleId);
     } catch (e) {
       window.app?.showToast(e.message || 'Allocation rejected.', 'error');
     }
+  }
+
+  showDriverDispatchPrompt(booking, vehicleId) {
+    const vehicle = this.vehicles.find(v => v.id === vehicleId) || { driverName: 'Fleet Driver', plateNumber: 'TN-33' };
+    const oldModal = document.getElementById('dispatchSuccessModal');
+    if (oldModal) oldModal.remove();
+
+    const promptModal = document.createElement('div');
+    promptModal.className = 'modal-backdrop active';
+    promptModal.id = 'dispatchSuccessModal';
+    promptModal.innerHTML = `
+      <div class="modal-card" style="text-align:center; max-width:500px;">
+        <div style="font-size:3.5rem; margin-bottom:0.75rem;">🚚</div>
+        <h3 style="color:#059669; font-size:1.35rem; margin-bottom:0.4rem;">Allocation Approved & Dispatched!</h3>
+        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.25rem;">
+          Order #${booking.id} (${booking.portionsRequested} portions) has been assigned to Driver <strong>${vehicle.driverName}</strong> (${vehicle.plateNumber}).
+        </p>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:1.5rem; text-align:left; font-size:0.82rem;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span style="font-weight:700; color:var(--text-main);">Dijkstra Locked Route:</span>
+            <span class="route-pill">${booking.routeMetrics?.totalDistanceKm || 2.1} km • ~${booking.routeMetrics?.travelMinutes || 6} min transit</span>
+          </div>
+          <div style="color:var(--primary); font-weight:700;">
+            ${booking.routeMetrics?.donorLocation || 'Pickup'} ➔ ${booking.routeMetrics?.recipientLocation || 'Delivery'}
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem;">
+          <button type="button" class="btn-secondary" style="flex:1;" onclick="document.getElementById('dispatchSuccessModal').remove()">
+            Stay in Admin Center
+          </button>
+          <button type="button" class="btn-primary" style="flex:1.5; background:#0284c7; border-color:#0284c7;" 
+                  onclick="document.getElementById('dispatchSuccessModal').remove(); window.app.switchRole('DRIVER', '${vehicleId}')">
+            <span>🚚 Open Driver GPS Tracking</span>
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(promptModal);
   }
 
   closeFeasibilityModal() {

@@ -1,14 +1,13 @@
 /**
  * Annam - Smart Food Distribution System
- * Initial Mock Dataset
+ * Initial Mock Dataset - Erode City & Surroundings Region
  * 
  * Contains:
- * - 5 Donors (Restaurants, Hotels, College Canteens, Caterers, Bakeries)
- * - 12 Recipients (Shelters, Orphanages, Community Centers, Food Banks)
- * - 1 Super Admin
- * - 3 Transport Vehicles with varied portion capacities
- * - Pre-loaded food donations (Pending, Approved, Available)
- * - Sample bookings
+ * - 5 Food Donors in Erode (Restaurants, Banquets, College Canteens, Annadhanam Kitchens, Bakeries)
+ * - 12 Recipient Shelters in Erode & Surroundings (Homeless Shelters, Orphanages, Elder Care, Migrant Centers)
+ * - 1 Super Admin (Erode Food Redistribution Operations Command)
+ * - 3 Transport Vehicles (TN-33 Erode RTO Registered: EV-Van, Heavy Truck, Rapid E-Bike)
+ * - Pre-loaded food donations & sample bookings
  */
 
 function getFutureIsoString(hoursAhead) {
@@ -26,197 +25,197 @@ function getPastIsoString(hoursAgo) {
 const INITIAL_DONORS = [
   {
     id: 'donor_01',
-    name: 'Spice Garden Restaurant',
-    type: 'Restaurant',
-    email: 'spicegarden@annam.org',
-    phone: '+91 98450 11223',
-    locationId: 'LOC_01',
-    address: '42 Central Boulevard, City Center',
-    contactPerson: 'Chef Raghavendra Rao',
-    fssaiLicense: 'FSSAI-11223344556677',
+    name: 'Junior Kuppanna & Annapoorna Dining',
+    type: 'Multi-Cuisine Restaurant',
+    email: 'kuppanna@annam.org',
+    phone: '+91 94432 11223',
+    locationId: 'LOC_01', // PS Park & Manikoondu
+    address: '14 Netaji Road, PS Park Circle, Erode Central',
+    contactPerson: 'Chef Raghavan Murugesan',
+    fssaiLicense: 'FSSAI-33018001002341',
     avatar: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&auto=format&fit=crop&q=80',
-    description: 'Specializes in North Indian curries, steamed rice, and tandoori breads.'
+    description: 'Renowned Erode dining brand specializing in South Indian meals, jeera rice, veg gravies, and meal boxes.'
   },
   {
     id: 'donor_02',
-    name: 'Royal Palace Hotel & Banquets',
-    type: 'Luxury Hotel',
-    email: 'royalpalace@annam.org',
-    phone: '+91 98450 22334',
-    locationId: 'LOC_08',
-    address: '108 Grand Avenue Boulevard',
-    contactPerson: 'Meera Nambiar (F&B Director)',
-    fssaiLicense: 'FSSAI-22334455667788',
+    name: 'Hotel Oxford & Grand Palace Banquets',
+    type: 'Luxury Hotel & Convention Center',
+    email: 'oxfordbanquets@annam.org',
+    phone: '+91 94432 22334',
+    locationId: 'LOC_02', // Central Bus Stand & Mettur Road
+    address: '88 Mettur Road, Near Central Bus Stand, Erode',
+    contactPerson: 'Senthil Kumar (F&B Director)',
+    fssaiLicense: 'FSSAI-33018002003452',
     avatar: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=150&auto=format&fit=crop&q=80',
-    description: 'Premium buffet and banquet surplus from weddings and corporate summits.'
+    description: 'Surplus hot buffet and banquet feasts from corporate conferences, textile expos, and wedding receptions.'
   },
   {
     id: 'donor_03',
-    name: 'Green Leaf College Canteen',
-    type: 'Educational Institution',
-    email: 'greenleaf@annam.org',
-    phone: '+91 98450 33445',
-    locationId: 'LOC_07',
-    address: 'University Campus, Gate 4',
-    contactPerson: 'Prof. Ananya Sen',
-    fssaiLicense: 'FSSAI-33445566778899',
+    name: 'Kongu & Vellalar Campus Mega Canteen',
+    type: 'Educational Institution Canteen',
+    email: 'vellalarcanteen@annam.org',
+    phone: '+91 94432 33445',
+    locationId: 'LOC_05', // Thindal (Perundurai Road)
+    address: 'Vellalar Educational Complex, Thindal Hill, Perundurai Road, Erode',
+    contactPerson: 'Prof. K. Thangavel',
+    fssaiLicense: 'FSSAI-33018003004563',
     avatar: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=150&auto=format&fit=crop&q=80',
-    description: 'High-volume wholesome vegetarian lunch meals, dal, rotis, and seasonal vegetables.'
+    description: 'Nutritious wholesome campus meals, sambar rice combos, lemon rice, chapatis, and fresh vegetable kootu.'
   },
   {
     id: 'donor_04',
-    name: 'Annapurna Community Kitchen',
-    type: 'Catering & Social Kitchen',
-    email: 'annapurna@annam.org',
-    phone: '+91 98450 44556',
-    locationId: 'LOC_03',
-    address: '15 North Market Square',
-    contactPerson: 'Kalyan Sundaram',
-    fssaiLicense: 'FSSAI-44556677889900',
+    name: 'Sri Krishna Annadhanam Social Kitchen',
+    type: 'Catering & Social Kitchen Trust',
+    email: 'annadhanam@annam.org',
+    phone: '+91 94432 44556',
+    locationId: 'LOC_04', // District Collectorate & Sampath Nagar
+    address: '22 Collectorate Avenue, Sampath Nagar, Erode',
+    contactPerson: 'Kalyana Sundaram Iyer',
+    fssaiLicense: 'FSSAI-33018004005674',
     avatar: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=150&auto=format&fit=crop&q=80',
-    description: 'Large-pot nutritious khichdi, sambar rice, and vegetable pulao.'
+    description: 'Large-pot wholesome pure vegetarian khichdi, bisibelebath, dal rasam rice, and steamed idlis.'
   },
   {
     id: 'donor_05',
-    name: 'Metro Artisan Bakery',
+    name: 'Bake Valley Artisan Bakery',
     type: 'Bakery & Confectionery',
-    email: 'metrobakery@annam.org',
-    phone: '+91 98450 55667',
-    locationId: 'LOC_06',
-    address: '77 West End Commercial Road',
-    contactPerson: 'Zoya Fernandes',
-    fssaiLicense: 'FSSAI-55667788990011',
+    email: 'bakevalley@annam.org',
+    phone: '+91 94432 55667',
+    locationId: 'LOC_14', // Veerappanchatram & Sathy Road
+    address: '45 Sathy Main Road, Veerappanchatram, Erode',
+    contactPerson: 'Priya Dharshini',
+    fssaiLicense: 'FSSAI-33018005006785',
     avatar: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=80',
-    description: 'Whole wheat bread loaves, dinner rolls, buns, and baked tea cakes.'
+    description: 'Fresh whole wheat loaves, buns, butter dinner rolls, and packaged rusks for community shelters.'
   }
 ];
 
 const INITIAL_RECIPIENTS = [
   {
     id: 'recip_01',
-    name: 'Hope Shelter for Homeless',
+    name: 'Karunai Illam Destitute & Homeless Shelter',
     category: 'Homeless Shelter',
-    email: 'hope@annam.org',
-    phone: '+91 97400 11001',
-    locationId: 'LOC_04',
-    address: '12 South Riverside Road',
-    capacity: 85,
-    coordinator: 'Sister Teresa Maria',
+    email: 'karunai@annam.org',
+    phone: '+91 98427 11001',
+    locationId: 'LOC_03', // Erode Junction Railway Station
+    address: 'Railway Station Colony South Gate, Erode Junction',
+    capacity: 90,
+    coordinator: 'Sister Arul Mary',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_02',
-    name: 'Karuna Care Children Orphanage',
+    name: 'Anbu Ashram Children Orphanage',
     category: 'Orphanage & Child Welfare',
-    email: 'karuna@annam.org',
-    phone: '+91 97400 11002',
-    locationId: 'LOC_05',
-    address: '88 East Gate Cross',
+    email: 'anbuashram@annam.org',
+    phone: '+91 98427 11002',
+    locationId: 'LOC_07', // Bhavani Kooduthurai
+    address: 'Bhavani Riverbank Road, Near Sangameswarar Temple, Bhavani',
     capacity: 65,
-    coordinator: 'Dr. Vigneshwar',
+    coordinator: 'Dr. R. Vigneshwar',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_03',
-    name: 'St. Jude Elderly Care Home',
-    category: 'Elderly Care',
-    email: 'stjude@annam.org',
-    phone: '+91 97400 11003',
-    locationId: 'LOC_03',
-    address: '3 North Market Lane',
-    capacity: 45,
-    coordinator: 'Father Thomas',
+    name: 'Mother Teresa Elder Care Home',
+    category: 'Elderly Care & Hospice',
+    email: 'motherteresa.erode@annam.org',
+    phone: '+91 98427 11003',
+    locationId: 'LOC_11', // Surampatti Valasu
+    address: '18 Gandhiji Street, Surampatti Valasu, Erode',
+    capacity: 50,
+    coordinator: 'Mother Agnes Pushpam',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1516307365426-bea591f05011?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_04',
-    name: 'Sneha Community Relief Foundation',
-    category: 'Community Center',
-    email: 'sneha@annam.org',
-    phone: '+91 97400 11004',
-    locationId: 'LOC_13',
-    address: 'Suburban Colony Sector 2',
-    capacity: 100,
-    coordinator: 'Lakshmi Narayan',
+    name: 'Sneham Foundation Daily Worker Food Bank',
+    category: 'Community Food Bank',
+    email: 'sneham@annam.org',
+    phone: '+91 98427 11004',
+    locationId: 'LOC_12', // Solar Bus Stand
+    address: 'Solar Integrated Terminal Ring Road, Karur Bypass, Erode',
+    capacity: 120,
+    coordinator: 'V. Lakshmi Narayanan',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_05',
-    name: 'Anandha Nilayam Youth Shelter',
+    name: 'Nethaji Youth Guidance & Welfare Hostel',
     category: 'Youth Shelter',
-    email: 'anandha@annam.org',
-    phone: '+91 97400 11005',
-    locationId: 'LOC_01',
-    address: '5 Civic Lane, Central City Center',
-    capacity: 50,
+    email: 'nethaji.hostel@annam.org',
+    phone: '+91 98427 11005',
+    locationId: 'LOC_01', // PS Park & Manikoondu
+    address: '4 Manikoondu Civic Complex, Netaji Road, Erode Central',
+    capacity: 55,
     coordinator: 'Praveen Chander',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_06',
-    name: 'Shanti Peace Food Pantry',
-    category: 'Food Pantry',
-    email: 'shanti@annam.org',
-    phone: '+91 97400 11006',
-    locationId: 'LOC_10',
-    address: 'Midtown Crossway Transit Block',
-    capacity: 70,
-    coordinator: 'Sardar Manpreet Singh',
+    name: 'Cauvery Riverfront Community Food Pantry',
+    category: 'Food Pantry & Crisis Haven',
+    email: 'cauvery.relief@annam.org',
+    phone: '+91 98427 11006',
+    locationId: 'LOC_13', // Karungalpalayam
+    address: 'Cauvery Bridge North Bank, Karungalpalayam, Erode',
+    capacity: 75,
+    coordinator: 'Gopalakrishnan Nair',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1578357078586-491adf1aa5ba?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_07',
-    name: 'Sunrise Women & Child Refuge',
-    category: "Women's Shelter",
-    email: 'sunrise@annam.org',
-    phone: '+91 97400 11007',
-    locationId: 'LOC_09',
-    address: '19 Heritage Square, Old City',
-    capacity: 40,
-    coordinator: 'Bhavani Shankar',
+    name: 'Shanthi Nilayam Women & Children Refuge',
+    category: "Women & Child Refuge",
+    email: 'shanthinilayam@annam.org',
+    phone: '+91 98427 11007',
+    locationId: 'LOC_04', // Collectorate & Sampath Nagar
+    address: '15 Court Road, Sampath Nagar, Erode',
+    capacity: 45,
+    coordinator: 'Bhavani Shanmugam',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_08',
-    name: 'Grace Children Hope Home',
-    category: 'Children Foster Care',
-    email: 'grace@annam.org',
-    phone: '+91 97400 11008',
-    locationId: 'LOC_11',
-    address: 'Hill View Ridge 2',
-    capacity: 35,
-    coordinator: 'Rosemary David',
+    name: 'Perundurai Patient Attendant Care Home',
+    category: 'Patient Support Shelter',
+    email: 'perundurai.care@annam.org',
+    phone: '+91 98427 11008',
+    locationId: 'LOC_06', // Perundurai SIPCOT
+    address: 'IRTT Hospital Road, SIPCOT Phase 1, Perundurai',
+    capacity: 80,
+    coordinator: 'Dr. S. Karthikeyan',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_09',
-    name: 'Mission Mercy Relief Center',
+    name: 'Chithode Highway Migrant Support Haven',
     category: 'Migrant Support Hub',
-    email: 'mercy@annam.org',
-    phone: '+91 97400 11009',
-    locationId: 'LOC_12',
-    address: 'Industrial Logistic Yard 5',
-    capacity: 120,
-    coordinator: 'Balwinder Dhillon',
+    email: 'chithode.haven@annam.org',
+    phone: '+91 98427 11009',
+    locationId: 'LOC_08', // Chithode NH 544
+    address: 'NH 544 Bypass Crossway, Chithode, Erode',
+    capacity: 100,
+    coordinator: 'Balwinder Singh',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_10',
-    name: 'Navjeevan Student Pantry',
+    name: 'Vellalar Students & Rural Youth Shelter',
     category: 'Student Welfare Pantry',
-    email: 'navjeevan@annam.org',
-    phone: '+91 97400 11010',
-    locationId: 'LOC_07',
-    address: 'University Campus North Annex',
+    email: 'vellalar.youth@annam.org',
+    phone: '+91 98427 11010',
+    locationId: 'LOC_05', // Thindal
+    address: 'Thindal Educational Belt, Perundurai Road, Erode',
     capacity: 60,
     coordinator: 'Aditya Vardhan',
     verified: true,
@@ -224,27 +223,27 @@ const INITIAL_RECIPIENTS = [
   },
   {
     id: 'recip_11',
-    name: 'Mother Teresa Destitute Home',
-    category: 'Destitute Shelter',
-    email: 'motherteresa@annam.org',
-    phone: '+91 97400 11011',
-    locationId: 'LOC_08',
-    address: 'Grand Avenue South Wing',
+    name: 'Pallipalayam Weavers Community Care Home',
+    category: 'Artisan Welfare Shelter',
+    email: 'pallipalayam.care@annam.org',
+    phone: '+91 98427 11011',
+    locationId: 'LOC_09', // Pallipalayam
+    address: 'SPB Colony Road, Pallipalayam, Cauvery RS',
     capacity: 65,
-    coordinator: 'Sister Agnes',
+    coordinator: 'M. Natarajan',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb7?w=150&auto=format&fit=crop&q=80'
   },
   {
     id: 'recip_12',
-    name: 'Sevak Kendra Crisis Haven',
-    category: 'Crisis Relief Haven',
-    email: 'sevak@annam.org',
-    phone: '+91 97400 11012',
-    locationId: 'LOC_06',
-    address: 'West End Sector 4',
+    name: 'Modakkurichi Rural Destitute Relief Center',
+    category: 'Rural Support Center',
+    email: 'modakkurichi.relief@annam.org',
+    phone: '+91 98427 11012',
+    locationId: 'LOC_15', // Modakkurichi
+    address: 'Modakkurichi Main Bazaar Road, Erode District',
     capacity: 55,
-    coordinator: 'Gopal Krishnan',
+    coordinator: 'Chinnasamy Gounder',
     verified: true,
     avatar: 'https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=150&auto=format&fit=crop&q=80'
   }
@@ -255,48 +254,48 @@ const INITIAL_ADMIN = {
   name: 'Annam Super Admin Operations',
   role: 'SUPER_ADMIN',
   email: 'admin@annam.org',
-  phone: '+91 98000 00001',
-  title: 'City Food Distribution Director'
+  phone: '+91 94422 00001',
+  title: 'Erode District Food Redistribution Command Director'
 };
 
 const INITIAL_VEHICLES = [
   {
     id: 'veh_01',
     name: 'Eco-Van Alpha (EV-01)',
-    plateNumber: 'KA-01-EV-2024',
+    plateNumber: 'TN-33-AX-2024',
     type: 'Electric Refrigerated Van',
     capacityPortions: 60,
     status: 'Available', // Available, In-Transit, Maintenance
-    currentLocationId: 'LOC_01',
+    currentLocationId: 'LOC_01', // PS Park Depot
     speedMultiplier: 1.0,
-    driverName: 'Ramesh Kumar',
-    driverPhone: '+91 99001 23456',
+    driverName: 'Ramesh Kumar (Erode Central)',
+    driverPhone: '+91 98428 23456',
     temperatureControlled: true
   },
   {
     id: 'veh_02',
-    name: 'City Express Heavy (TRK-02)',
-    plateNumber: 'KA-01-TR-9988',
-    type: 'Medium Insulated Truck',
+    name: 'Kongu Express Heavy (TRK-02)',
+    plateNumber: 'TN-33-TR-9988',
+    type: 'Medium Insulated Food Truck',
     capacityPortions: 150,
     status: 'Available',
-    currentLocationId: 'LOC_10',
+    currentLocationId: 'LOC_02', // Central Bus Stand Depot
     speedMultiplier: 0.9,
-    driverName: 'Suresh Patel',
-    driverPhone: '+91 99002 34567',
+    driverName: 'Suresh Patel (Perundurai Highway)',
+    driverPhone: '+91 98428 34567',
     temperatureControlled: true
   },
   {
     id: 'veh_03',
-    name: 'Rapid Cargo Bike (MOTO-03)',
-    plateNumber: 'KA-01-BK-4512',
-    type: 'Rapid Cargo E-Bike',
+    name: 'Bhavani Rapid Cargo Bike (MOTO-03)',
+    plateNumber: 'TN-33-BK-4512',
+    type: 'Agile Delivery E-Cargo Bike',
     capacityPortions: 30,
     status: 'Available',
-    currentLocationId: 'LOC_06',
+    currentLocationId: 'LOC_14', // Veerappanchatram
     speedMultiplier: 1.25,
-    driverName: 'Vikram Das',
-    driverPhone: '+91 99003 45678',
+    driverName: 'Vikram Das (Bhavani Link)',
+    driverPhone: '+91 98428 45678',
     temperatureControlled: false
   }
 ];
@@ -305,8 +304,8 @@ const INITIAL_DONATIONS = [
   {
     id: 'don_01',
     donorId: 'donor_01',
-    donorName: 'Spice Garden Restaurant',
-    foodName: 'Paneer Butter Masala & Jeera Rice Meal Box',
+    donorName: 'Junior Kuppanna & Annapoorna Dining',
+    foodName: 'Kongu Paneer Ghee Rice & Sambar Meal Box',
     category: 'Cooked Meals',
     photoUrl: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&auto=format&fit=crop&q=80',
     portionsTotal: 50,
@@ -314,7 +313,7 @@ const INITIAL_DONATIONS = [
     qualityCondition: 'Freshly Prepared Hot Food',
     preparationDateTime: getPastIsoString(1.5),
     useByDateTime: getFutureIsoString(5.5),
-    pickupLocationId: 'LOC_01',
+    pickupLocationId: 'LOC_01', // PS Park & Manikoondu
     status: 'Approved', // Approved -> Visible to recipients
     dietary: 'Vegetarian',
     storageReq: 'Keep Warm (>65°C)',
@@ -323,8 +322,8 @@ const INITIAL_DONATIONS = [
   {
     id: 'don_02',
     donorId: 'donor_02',
-    donorName: 'Royal Palace Hotel & Banquets',
-    foodName: 'Grand Banquet Dum Biryani & Dal Makhani Feast',
+    donorName: 'Hotel Oxford & Grand Palace Banquets',
+    foodName: 'Grand Banquet Vegetable Dum Biryani & Kurma Feast',
     category: 'Cooked Meals',
     photoUrl: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&auto=format&fit=crop&q=80',
     portionsTotal: 120,
@@ -332,17 +331,17 @@ const INITIAL_DONATIONS = [
     qualityCondition: 'Pristine Surplus Buffet Food',
     preparationDateTime: getPastIsoString(2),
     useByDateTime: getFutureIsoString(6.0),
-    pickupLocationId: 'LOC_08',
+    pickupLocationId: 'LOC_02', // Central Bus Stand & Mettur Road
     status: 'Approved',
-    dietary: 'Vegetarian & Halal Non-Veg options separated',
+    dietary: 'Pure Vegetarian',
     storageReq: 'Insulated Hot Container',
-    notes: 'Surplus from high-profile corporate seminar. Inspected by executive chef.'
+    notes: 'Surplus from textile trade summit. Inspected and sealed by head banquet chef.'
   },
   {
     id: 'don_03',
     donorId: 'donor_05',
-    donorName: 'Metro Artisan Bakery',
-    foodName: 'Artisan Whole Wheat Loaves & Milk Dinner Rolls',
+    donorName: 'Bake Valley Artisan Bakery',
+    foodName: 'Artisan Whole Wheat Loaves & Sweet Dinner Rolls',
     category: 'Bakery & Breads',
     photoUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500&auto=format&fit=crop&q=80',
     portionsTotal: 40,
@@ -350,7 +349,7 @@ const INITIAL_DONATIONS = [
     qualityCondition: 'Oven-Fresh Today',
     preparationDateTime: getPastIsoString(3),
     useByDateTime: getFutureIsoString(24.0),
-    pickupLocationId: 'LOC_06',
+    pickupLocationId: 'LOC_14', // Veerappanchatram
     status: 'Approved',
     dietary: 'Vegetarian (Eggless)',
     storageReq: 'Ambient / Dry Storage',
@@ -359,25 +358,25 @@ const INITIAL_DONATIONS = [
   {
     id: 'don_04',
     donorId: 'donor_03',
-    donorName: 'Green Leaf College Canteen',
+    donorName: 'Kongu & Vellalar Campus Mega Canteen',
     foodName: 'Nutritious South Indian Sambar & Lemon Rice Combo',
     category: 'Cooked Meals',
     photoUrl: 'https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?w=500&auto=format&fit=crop&q=80',
     portionsTotal: 75,
     portionsRemaining: 75,
-    qualityCondition: 'Fresh Lunch Surplus',
+    qualityCondition: 'Fresh Campus Lunch Surplus',
     preparationDateTime: getPastIsoString(1),
     useByDateTime: getFutureIsoString(4.0),
-    pickupLocationId: 'LOC_07',
+    pickupLocationId: 'LOC_05', // Thindal
     status: 'Pending', // Pending super admin approval!
     dietary: 'Pure Vegetarian',
     storageReq: 'Keep Warm',
-    notes: 'Cooked fresh at 12:30 PM for campus afternoon rush.'
+    notes: 'Cooked fresh at 12:30 PM for campus afternoon session.'
   },
   {
     id: 'don_05',
     donorId: 'donor_04',
-    donorName: 'Annapurna Community Kitchen',
+    donorName: 'Sri Krishna Annadhanam Social Kitchen',
     foodName: 'Moong Dal Khichdi & Mixed Vegetable Porridge',
     category: 'Cooked Meals',
     photoUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=80',
@@ -385,12 +384,12 @@ const INITIAL_DONATIONS = [
     portionsRemaining: 60,
     qualityCondition: 'Freshly Prepared and Sealed',
     preparationDateTime: getPastIsoString(0.5),
-    useByDateTime: getFutureIsoString(0.6), // Tight 36-min use-by window for testing rejection/infeasible timing
-    pickupLocationId: 'LOC_03',
+    useByDateTime: getFutureIsoString(0.7), // Tight use-by window for testing feasibility timing
+    pickupLocationId: 'LOC_04', // Sampath Nagar / Collectorate
     status: 'Approved',
     dietary: 'Vegetarian / Low Spice',
     storageReq: 'Keep Warm',
-    notes: 'Ideal for elderly residents or children shelters.'
+    notes: 'Mildly spiced, ideal for elderly residents or children shelters.'
   }
 ];
 
@@ -399,12 +398,12 @@ const INITIAL_BOOKINGS = [
     id: 'bk_01',
     donationId: 'don_01',
     recipientId: 'recip_01',
-    recipientName: 'Hope Shelter for Homeless',
+    recipientName: 'Karunai Illam Destitute & Homeless Shelter',
     portionsRequested: 25,
     status: 'Pending', // Pending Admin Allocation review
-    deliveryLocationId: 'LOC_04',
+    deliveryLocationId: 'LOC_03', // Erode Junction
     createdAt: getPastIsoString(0.5),
-    specialInstructions: 'Please deliver to rear kitchen receiving dock.',
+    specialInstructions: 'Please deliver to rear kitchen receiving dock near Railway Colony gate.',
     rejectionReason: null,
     vehicleId: null,
     routeMetrics: null

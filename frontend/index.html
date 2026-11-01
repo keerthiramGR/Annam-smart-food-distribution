@@ -6,6 +6,9 @@
   <title>Annam – Smart Food Distribution and Food Waste Reduction System</title>
   <meta name="description" content="AI-assisted smart food distribution and waste reduction platform connecting restaurants, hotels, canteens, and bakeries with community shelters and food banks via optimized Dijkstra vehicle routing.">
   <link rel="stylesheet" href="css/styles.css">
+  <!-- Local High-Speed Leaflet Real Map Library (0ms load latency) -->
+  <link rel="stylesheet" href="css/leaflet.css">
+  <script src="js/leaflet.js"></script>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20%22100%22><text y=%22.9em%22 font-size=%2290%22>🍛</text></svg>">
 </head>
 <body>
@@ -35,6 +38,10 @@
           <span>🛡️ Super Admin</span>
           <span class="role-badge">Ops Command</span>
         </button>
+        <button class="role-nav-btn" data-role="DRIVER" id="navRoleDriver">
+          <span>🚚 Delivery Driver</span>
+          <span class="role-badge">Fleet GPS</span>
+        </button>
       </nav>
 
       <!-- Active User Profile & Actions -->
@@ -42,7 +49,7 @@
         <div class="current-user-card" id="headerProfileBadge" style="display:none;" title="Current Active Persona">
           <img class="user-avatar" id="headerUserAvatar" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&auto=format&fit=crop&q=80" alt="User Profile" />
           <div class="user-meta">
-            <span class="user-name" id="headerUserName">Spice Garden Restaurant</span>
+            <span class="user-name" id="headerUserName">Junior Kuppanna & Annapoorna Dining</span>
             <span class="user-role-label" id="headerUserRole">DONOR</span>
           </div>
         </div>
@@ -244,6 +251,42 @@
           <span class="door-arrow">➔</span>
         </button>
       </div>
+
+      <!-- DOOR 4: DELIVERY DRIVER FLEET GPS LOGIN -->
+      <div class="login-card driver-card">
+        <div class="card-ambient-glow driver-glow"></div>
+        <div class="login-card-header">
+          <div class="login-card-icon">🚚</div>
+          <div class="login-card-title">
+            <div class="title-with-pill">
+              <h3>Delivery Driver Fleet</h3>
+              <span class="role-pill pill-driver">3 Vehicles</span>
+            </div>
+            <p>Live Turn-by-Turn GPS Navigation & Handover</p>
+          </div>
+        </div>
+
+        <ul class="login-feature-list">
+          <li><span class="feat-check">✓</span> Live turn-by-turn Dijkstra GPS navigation</li>
+          <li><span class="feat-check">✓</span> View assigned donor pickup & shelter delivery stops</li>
+          <li><span class="feat-check">✓</span> Live speedometer, remaining km & ETA tracking</li>
+          <li><span class="feat-check">✓</span> Instant 1-tap food loaded & delivery confirmation</li>
+        </ul>
+
+        <div class="form-group">
+          <label class="login-select-label" for="loginDriverSelect">Choose Fleet Driver (3 Registered):</label>
+          <select class="form-control" id="loginDriverSelect">
+            <option value="veh_01">Ramesh Kumar - Eco-Van Alpha (TN-33-AX-2024, 60p)</option>
+            <option value="veh_02">Suresh Patel - Kongu Express Heavy (TN-33-TR-9988, 150p)</option>
+            <option value="veh_03">Vikram Das - Bhavani Rapid Cargo Bike (TN-33-BK-4512, 30p)</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-login-door btn-login-driver" id="btnLoginDriver">
+          <span>Enter as Delivery Driver</span>
+          <span class="door-arrow">➔</span>
+        </button>
+      </div>
     </div>
   </section>
 
@@ -259,8 +302,8 @@
         <div class="banner-left">
           <img class="banner-avatar" id="donorBannerAvatar" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=150&auto=format&fit=crop&q=80" alt="Donor Logo" />
           <div class="banner-info">
-            <h2 id="donorBannerName">Spice Garden Restaurant</h2>
-            <p id="donorBannerDesc">Restaurant • Contact: +91 98450 11223 • 42 Central Boulevard</p>
+            <h2 id="donorBannerName">Junior Kuppanna & Annapoorna Dining</h2>
+            <p id="donorBannerDesc">Multi-Cuisine Restaurant • Contact: +91 94432 11223 • 14 Netaji Road, PS Park Circle, Erode Central</p>
             <div class="banner-tags">
               <span class="tag primary" id="donorBannerFssai">FSSAI Certified</span>
               <span class="tag" id="donorBannerLoc">Location: LOC_01</span>
@@ -440,8 +483,8 @@
         <div class="banner-left">
           <img class="banner-avatar" id="recipBannerAvatar" src="https://images.unsplash.com/photo-1593113598332-cd288d649433?w=150&auto=format&fit=crop&q=80" alt="Recipient Logo" />
           <div class="banner-info">
-            <h2 id="recipBannerName">Hope Shelter for Homeless</h2>
-            <p id="recipBannerDesc">Homeless Shelter • Coordinator: Sister Teresa Maria • 12 South Riverside Road</p>
+            <h2 id="recipBannerName">Karunai Illam Destitute & Homeless Shelter</h2>
+            <p id="recipBannerDesc">Homeless Shelter • Coordinator: Sister Arul Mary • Railway Station Colony South Gate, Erode Junction</p>
             <div class="banner-tags">
               <span class="tag primary" id="recipBannerCap">Capacity: 85 beneficiaries</span>
               <span class="tag" id="recipBannerLoc">Sector: LOC_04</span>
@@ -689,28 +732,88 @@
     </div>
 
     <!-- ========================================================
-         SECTION 4: ROAD NETWORK & DIJKSTRA ROUTE EXPLORER
-         (Available across all roles for transparency)
+         VIEW 4: DELIVERY DRIVER GPS TRACKING DASHBOARD
          ======================================================== -->
-    <section class="graph-section" id="roadGraphSection">
-      <div class="card-header" style="margin-bottom:0.75rem;">
+    <div class="dashboard-view" id="viewDriver" style="display:none;">
+      <!-- Driver Banner with Persona Quick-Chips -->
+      <div class="section-banner">
+        <div class="banner-left">
+          <div class="banner-avatar" style="display:flex; align-items:center; justify-content:center; background:#0284c7; color:#fff; font-size:2rem; border-radius:50%; width:56px; height:56px; border:2.5px solid #38bdf8;">🚚</div>
+          <div class="banner-info">
+            <h2 id="driverBannerName">Ramesh Kumar (Erode Central)</h2>
+            <p id="driverBannerMeta">Fleet Vehicle: Eco-Van Alpha • License Plate: TN-33-AX-2024 • Contact: +91 98428 23456</p>
+            <div class="banner-tags">
+              <span class="tag primary" id="driverBannerStatus">Available</span>
+              <span class="tag" id="driverBannerVehicle">TN-33-AX-2024</span>
+              <span class="tag">GPS Location Tracking Active</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="quick-switch-container">
+          <span class="quick-switch-label">Switch Fleet Driver (3 Available):</span>
+          <div class="persona-chips" id="driverPersonaChips"></div>
+        </div>
+      </div>
+
+      <!-- Active Delivery Mission & Dispatch Section -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">
+              <span>🧭 Active Delivery Mission & Live Handover</span>
+            </h3>
+            <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem;">
+              Assigned food delivery order mapped via Dijkstra shortest path algorithm on Erode road network.
+            </p>
+          </div>
+          <button type="button" class="btn-secondary" id="btnDriverRefreshMission" style="padding:0.4rem 0.8rem; font-size:0.8rem;">
+            🔄 Refresh Mission Status
+          </button>
+        </div>
+
+        <div id="driverActiveMissionContent">
+          <!-- Populated dynamically by DriverController -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================
+       SECTION 4: ROAD NETWORK & DIJKSTRA ROUTE EXPLORER
+       (Always visible across landing gateway and all dashboard roles)
+       ======================================================== -->
+  <section class="graph-section" id="roadGraphSection">
+      <div class="card-header" style="margin-bottom:0.75rem; flex-wrap:wrap; gap:0.75rem;">
         <div>
           <h3 class="card-title">
-            <span>🗺️ Urban Road Graph & Dijkstra Shortest Path Engine</span>
+            <span>🗺️ Erode City Real Road Map & Dijkstra Navigation</span>
           </h3>
           <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.2rem;">
-            15 interconnected city sectors with bidirectional weighted distances and travel times. Click any two nodes or calculate below.
+            Real geographical map of Erode & surroundings (Bhavani, Perundurai, Chithode, Pallipalayam, Modakkurichi) showing Donors, Recipients, and Live GPS Dijkstra routing.
           </p>
         </div>
-        <div style="display:flex; align-items:center; gap:0.5rem;">
-          <span class="route-pill" style="background:var(--primary-bg); color:var(--primary-dark); border-color:var(--primary-border);">15 Nodes</span>
-          <span class="route-pill">24 Weighted Edges</span>
+        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+          <div class="map-view-toggle-group">
+            <button type="button" class="map-toggle-btn active" id="btnTileCarto" data-layer="carto">🧭 Fast Clean Map</button>
+            <button type="button" class="map-toggle-btn" id="btnTileOsm" data-layer="osm">🗺️ Streets</button>
+            <button type="button" class="map-toggle-btn" id="btnTileSat" data-layer="sat">🛰️ Satellite</button>
+            <button type="button" class="map-toggle-btn" id="btnRecenterErode" title="Recenter to Erode City">🎯 Center Erode</button>
+          </div>
+          <span class="route-pill" style="background:#ecfdf5; color:#065f46; border-color:#a7f3d0; font-weight:700;">15 Erode Sectors</span>
+          <span class="route-pill" style="background:#eff6ff; color:#1e40af; border-color:#bfdbfe; font-weight:700;">24 Road Edges</span>
         </div>
       </div>
 
       <div class="graph-container">
-        <!-- Canvas Visualizer with Live GPS Navigation HUD -->
-        <div class="canvas-wrapper">
+        <!-- Real Leaflet Map with Live GPS Navigation HUD -->
+        <div class="canvas-wrapper" id="mapWrapper">
+          <!-- Real Leaflet Interactive Map Container -->
+          <div id="realRoadMap" class="real-map-container"></div>
+
+          <!-- Fallback Canvas (activated if offline or canvas mode) -->
+          <canvas id="roadGraphCanvas" style="display:none;"></canvas>
+
           <!-- Top GPS Navigation HUD -->
           <div class="gps-hud-top" id="gpsHudTop">
             <div class="gps-status-badge">
@@ -720,15 +823,13 @@
             </div>
             <div class="gps-turn-instruction" id="gpsTurnInstruction">
               <span class="gps-turn-icon" id="gpsTurnIcon">➔</span>
-              <span id="gpsTurnText">Calculating optimal route...</span>
+              <span id="gpsTurnText">Calculating optimal route in Erode...</span>
             </div>
             <div class="gps-speed-display" id="gpsSpeedDisplay">
               <span class="gps-speed-value" id="gpsSpeedValue">42</span>
               <span class="gps-speed-unit">km/h</span>
             </div>
           </div>
-
-          <canvas id="roadGraphCanvas"></canvas>
 
           <!-- Bottom GPS Trip Progress HUD -->
           <div class="gps-hud-bottom" id="gpsHudBottom">
@@ -756,7 +857,7 @@
               </div>
               <div class="gps-metric-item">
                 <span class="gps-metric-label">Vehicle Assigned</span>
-                <span class="gps-metric-val" id="gpsVehicleName">Eco-Van Alpha</span>
+                <span class="gps-metric-val" id="gpsVehicleName">Eco-Van Alpha (TN-33)</span>
               </div>
             </div>
           </div>
@@ -769,22 +870,22 @@
           </div>
 
           <div class="form-group" style="margin-bottom:0.6rem;">
-            <label class="form-label">Origin Location (Donor / Depot)</label>
+            <label class="form-label">Origin Location (Food Donor / Pickup)</label>
             <select class="form-control" id="routeFromSelect"></select>
           </div>
 
           <div class="form-group" style="margin-bottom:0.6rem;">
-            <label class="form-label">Destination Location (Recipient Shelter)</label>
+            <label class="form-label">Destination Location (Recipient Shelter / Delivery)</label>
             <select class="form-control" id="routeToSelect"></select>
           </div>
 
           <div class="form-group" style="margin-bottom:0.8rem;">
-            <label class="form-label">Vehicle Assignment</label>
+            <label class="form-label">Fleet Vehicle Assignment</label>
             <select class="form-control" id="routeVehicleSelect">
               <option value="">Standard Speed (1.0x)</option>
-              <option value="veh_01">Eco-Van Alpha (1.0x, 60p)</option>
-              <option value="veh_02">City Express Heavy (0.9x, 150p)</option>
-              <option value="veh_03">Rapid Cargo Bike (1.25x, 30p)</option>
+              <option value="veh_01">Eco-Van Alpha (TN-33-AX-2024, 60p)</option>
+              <option value="veh_02">Kongu Express Heavy (TN-33-TR-9988, 150p)</option>
+              <option value="veh_03">Bhavani Rapid Cargo Bike (TN-33-BK-4512, 30p)</option>
             </select>
           </div>
 
@@ -800,9 +901,15 @@
           </div>
         </div>
       </div>
-    </section>
 
-  </main>
+      <!-- Map Legend Bar -->
+      <div class="map-legend-bar">
+        <div class="legend-item"><span class="legend-badge donor-badge">👨‍🍳</span> <strong>5 Food Donors</strong> (PS Park, Mettur Rd, Thindal, Sampath Nagar, Sathy Rd)</div>
+        <div class="legend-item"><span class="legend-badge recip-badge">🏠</span> <strong>12 Recipient Shelters</strong> (Erode Junction, Bhavani, Surampatti, Solar, etc.)</div>
+        <div class="legend-item"><span class="legend-badge route-badge">⚡</span> <strong>Dijkstra Optimal Route</strong> (Shortest Distance &amp; Transit Time)</div>
+        <div class="legend-item"><span class="legend-badge vehicle-badge">🚚</span> <strong>Live GPS Fleet Vehicle</strong> (Real-time tracking)</div>
+      </div>
+    </section>
 
   <!-- ========================================================
        MODAL 1: RECIPIENT PORTION REQUEST MODAL
@@ -1092,6 +1199,7 @@
   <script src="js/donor.js"></script>
   <script src="js/recipient.js"></script>
   <script src="js/admin.js"></script>
+  <script src="js/driver.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

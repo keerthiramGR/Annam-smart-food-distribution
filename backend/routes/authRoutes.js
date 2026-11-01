@@ -37,10 +37,25 @@ router.get('/accounts', (req, res) => {
     avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
   };
 
+  const vehicles = repo.getAllVehicles().map(v => ({
+    id: v.id,
+    name: v.driverName || v.name,
+    role: 'DRIVER',
+    vehicleName: v.name,
+    plateNumber: v.plateNumber,
+    driverName: v.driverName,
+    driverPhone: v.driverPhone,
+    status: v.status,
+    capacityPortions: v.capacityPortions,
+    currentLocationId: v.currentLocationId,
+    avatar: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=150&auto=format&fit=crop&q=80'
+  }));
+
   res.json({
     donors,
     recipients,
-    admin
+    admin,
+    vehicles
   });
 });
 
@@ -82,6 +97,27 @@ router.post('/login', (req, res) => {
       user: {
         ...recipient,
         role: 'RECIPIENT'
+      }
+    });
+  }
+
+  if (role === 'DRIVER') {
+    const vehicle = id ? repo.getVehicleById(id) : repo.getAllVehicles()[0];
+    if (!vehicle) return res.status(404).json({ error: 'Driver / vehicle not found' });
+    return res.json({
+      token: `mock-token-driver-${vehicle.id}`,
+      user: {
+        id: vehicle.id,
+        name: vehicle.driverName,
+        role: 'DRIVER',
+        vehicleName: vehicle.name,
+        plateNumber: vehicle.plateNumber,
+        driverName: vehicle.driverName,
+        driverPhone: vehicle.driverPhone,
+        status: vehicle.status,
+        capacityPortions: vehicle.capacityPortions,
+        currentLocationId: vehicle.currentLocationId,
+        avatar: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=150&auto=format&fit=crop&q=80'
       }
     });
   }

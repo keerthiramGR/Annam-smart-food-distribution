@@ -24,9 +24,11 @@ The Super Admin cannot arbitrarily approve a booking. The engine validates:
    $$\text{Estimated Completion} = \text{Earliest Start} + \text{Total Mission Time}$$
    $$\text{Feasible} \iff \text{Estimated Completion} < \text{Use-By Deadline}$$
 
-### 3. Interactive Road Graph & Dijkstra Visualizer
-- 15 interconnected city sectors with bidirectional weighted edges (distance in km and transit duration in minutes).
-- Interactive Canvas map with node halos, route highlighting, animated transit particles, and step-by-step turn-by-turn road segment breakdowns.
+### 3. Real Interactive Geographical Road Map & Dijkstra Visualizer (Erode, Tamil Nadu)
+- Real Leaflet-powered geographical map centered at **Erode (11.3418° N, 77.7274° E)** and surroundings (Bhavani, Perundurai, Chithode, Pallipalayam, Modakkurichi).
+- Map layer switcher: OpenStreetMap streets, CartoDB clean navigation, and Esri Satellite imagery.
+- 15 interconnected real-world city sectors with bidirectional weighted edges (distance in km and transit duration in minutes) tracing real roads (Brough Road, Mettur Road, Perundurai Road SH 96, Salem-Kochi Expressway NH 544, Cauvery Bridges).
+- Interactive donor (👨‍🍳) and recipient (🏠) pins with rich popups, one-click Origin/Destination selection, glowing Dijkstra route highlight, and real-time animated vehicle GPS tracking with live speedometer and turn HUD.
 
 ---
 
@@ -51,43 +53,43 @@ The Super Admin cannot arbitrarily approve a booking. The engine validates:
 
 3. **Open the application**:
    Open your browser and navigate to:
-   **[http://localhost:5000](http://localhost:5000)**
+   **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
-## 👥 Demo Accounts
+## 👥 Demo Accounts (Erode Region)
 
 ### 1. Food Donors (5 Accounts)
 | Donor Name | Sector | Type | Notes |
 |---|---|---|---|
-| **Spice Garden Restaurant** | LOC_01 (City Center) | Multi-Cuisine Dining | Meal boxes, curries, jeera rice |
-| **Royal Palace Hotel & Banquets** | LOC_08 (Grand Avenue) | Luxury Hotel & Banquet | High-volume buffet feast surplus |
-| **Green Leaf College Canteen** | LOC_07 (University Campus) | Educational Canteen | Lunch surplus, sambar & rice combos |
-| **Annapurna Community Kitchen** | LOC_03 (North Market) | Catering & Social Kitchen | Nutritious khichdi & porridge |
-| **Metro Artisan Bakery** | LOC_06 (West End) | Bakery & Confectionery | Whole wheat loaves & dinner rolls |
+| **Junior Kuppanna & Annapoorna Dining** | LOC_01 (PS Park & Manikoondu) | Multi-Cuisine Restaurant | Kongu Paneer Ghee Rice & Sambar Meal Box |
+| **Hotel Oxford & Grand Palace Banquets** | LOC_02 (Central Bus Stand & Mettur Rd) | Luxury Hotel & Convention | Grand Banquet Vegetable Dum Biryani Feast |
+| **Kongu & Vellalar Campus Mega Canteen** | LOC_05 (Thindal - Perundurai Rd) | Educational Canteen | South Indian Sambar & Lemon Rice Combo |
+| **Sri Krishna Annadhanam Social Kitchen** | LOC_04 (Collectorate & Sampath Nagar) | Social Kitchen Trust | Moong Dal Khichdi & Mixed Veg Porridge |
+| **Bake Valley Artisan Bakery** | LOC_14 (Veerappanchatram & Sathy Rd) | Bakery & Confectionery | Whole wheat loaves & dinner rolls |
 
 ### 2. Recipient Shelters (12 Accounts)
-1. **Hope Shelter for Homeless** (LOC_04 - South Riverside)
-2. **Karuna Care Children Orphanage** (LOC_05 - East Gate)
-3. **St. Jude Elderly Care Home** (LOC_03 - North Market)
-4. **Sneha Community Relief Foundation** (LOC_13 - Suburban Colony)
-5. **Anandha Nilayam Youth Shelter** (LOC_01 - City Center)
-6. **Shanti Peace Food Pantry** (LOC_10 - Midtown)
-7. **Sunrise Women & Child Refuge** (LOC_09 - Old Heritage)
-8. **Grace Children Hope Home** (LOC_11 - Hill View)
-9. **Mission Mercy Relief Center** (LOC_12 - Industrial Zone)
-10. **Navjeevan Student Pantry** (LOC_07 - University)
-11. **Mother Teresa Destitute Home** (LOC_08 - Grand Avenue)
-12. **Sevak Kendra Crisis Haven** (LOC_06 - West End)
+1. **Karunai Illam Destitute & Homeless Shelter** (LOC_03 - Erode Junction Railway Station)
+2. **Anbu Ashram Children Orphanage** (LOC_07 - Bhavani Kooduthurai)
+3. **Mother Teresa Elder Care Home** (LOC_11 - Surampatti Valasu)
+4. **Sneham Foundation Daily Worker Food Bank** (LOC_12 - Solar Bus Stand & Karur Rd)
+5. **Nethaji Youth Guidance & Welfare Hostel** (LOC_01 - PS Park & Manikoondu)
+6. **Cauvery Riverfront Community Food Pantry** (LOC_13 - Karungalpalayam Old Cauvery Bridge)
+7. **Shanthi Nilayam Women & Children Refuge** (LOC_04 - District Collectorate & Sampath Nagar)
+8. **Perundurai Patient Attendant Care Home** (LOC_06 - Perundurai Town & SIPCOT)
+9. **Chithode Highway Migrant Support Haven** (LOC_08 - Chithode NH 544 Junction)
+10. **Vellalar Students & Rural Youth Shelter** (LOC_05 - Thindal Educational Corridor)
+11. **Pallipalayam Weavers Community Care Home** (LOC_09 - Pallipalayam Cauvery East Bank)
+12. **Modakkurichi Rural Destitute Relief Center** (LOC_15 - Modakkurichi Agricultural Belt)
 
 ### 3. Super Admin
 - **Email**: `admin@annam.org`
 - Accessible directly from Door 3 on the Login Gateway.
 
-### 4. Transport Fleet (3 Vehicles)
-- **Eco-Van Alpha (EV-01)**: Capacity 60 portions, Speed factor 1.0x, Refrigerated.
-- **City Express Heavy (TRK-02)**: Capacity 150 portions, Speed factor 0.9x, Insulated.
-- **Rapid Cargo Bike (MOTO-03)**: Capacity 30 portions, Speed factor 1.25x, Agile urban delivery.
+### 4. Transport Fleet (3 Vehicles - TN-33 Erode Registered)
+- **Eco-Van Alpha (EV-01)**: `TN-33-AX-2024`, Capacity 60 portions, Speed factor 1.0x, Refrigerated.
+- **Kongu Express Heavy (TRK-02)**: `TN-33-TR-9988`, Capacity 150 portions, Speed factor 0.9x, Insulated.
+- **Bhavani Rapid Cargo Bike (MOTO-03)**: `TN-33-BK-4512`, Capacity 30 portions, Speed factor 1.25x, Agile urban delivery.
 
 ---
 

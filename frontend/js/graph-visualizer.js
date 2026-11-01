@@ -1,67 +1,149 @@
 /**
  * Annam - Smart Food Distribution System
- * Live GPS Navigation & Dijkstra Tracking Visualizer
- * Features real-time GPS vehicle movement, radar beacons, turn-by-turn HUD, and dynamic telemetry.
+ * Real Geographical Map & Live Dijkstra Navigation Visualizer for Erode City & Surroundings
+ * 
+ * Powered by Leaflet.js with OpenStreetMap / CartoDB / Satellite Imagery,
+ * featuring interactive donor/recipient markers, turn-by-turn road paths,
+ * real-time GPS fleet animation, and step-by-step telemetry HUD.
  */
 
 class RoadGraphVisualizer {
-  constructor(canvasId) {
+  constructor(canvasId = 'roadGraphCanvas') {
+    this.canvasId = canvasId;
     this.canvas = document.getElementById(canvasId);
-    if (!this.canvas) return;
-    this.ctx = this.canvas.getContext('2d');
+    this.mapContainer = document.getElementById('realRoadMap');
+    this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+
+    // Data State
     this.nodes = [];
     this.edges = [];
+    this.donors = [];
+    this.recipients = [];
     this.highlightedPath = [];
     this.highlightedNodes = new Set();
-    this.selectedSource = 'LOC_01';
-    this.selectedTarget = 'LOC_04';
+    this.highlightedCoordinates = [];
+    this.selectedSource = 'LOC_01'; // PS Park & Manikoondu (Junior Kuppanna)
+    this.selectedTarget = 'LOC_03'; // Erode Junction (Karunai Illam)
+    this.currentRoute = null;
     this.animationId = null;
 
-    // GPS Navigation & Telemetry State
+    // GPS Telemetry State
     this.gpsProgress = 0.0;
     this.gpsPlaying = true;
     this.gpsSpeedFactor = 1.0;
     this.dashOffset = 0;
     this.pulseAngle = 0;
-    this.currentRoute = null;
     this.vehicleInfo = {
       id: 'veh_01',
       name: 'Eco-Van Alpha (EV-01)',
       type: 'van',
-      plate: 'KA-01-EV-2024',
+      plate: 'TN-33-AX-2024',
       baseSpeed: 42
     };
+
+    // Leaflet Map State
+    this.map = null;
+    this.tileLayers = {};
+    this.currentTileLayer = null;
+    this.baseRoadsLayer = null;
+    this.nodesLayer = null;
+    this.routePolylineLayer = null;
+    this.vehicleMarker = null;
+    this.markerMap = new Map();
 
     this.init();
   }
 
   async init() {
-    this.resizeCanvas();
-    window.addEventListener('resize', () => this.resizeCanvas());
-
-    if (window.ResizeObserver && this.canvas.parentElement) {
-      this.resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.contentRect.width > 0) {
-            this.resizeCanvas();
-          }
-        }
-      });
-      this.resizeObserver.observe(this.canvas.parentElement);
-    }
-
     this.initGpsHudControls();
+    this.initMapControls();
 
     try {
-      const data = await window.api.getGraph();
-      this.nodes = data.nodes || [];
-      this.edges = data.edges || [];
+      // 1. Fetch road graph & account data in parallel
+      const [graphData, donorsData, recipientsData] = await Promise.all([
+        window.api.getGraph().catch(() => ({ nodes: [], edges: [] })),
+        window.api.getDonors ? window.api.getDonors().catch(() => []) : Promise.resolve([]),
+        window.api.getRecipients ? window.api.getRecipients().catch(() => []) : Promise.resolve([])
+      ]);
+
+      this.nodes = graphData.nodes || [];
+      this.edges = graphData.edges || [];
+      this.donors = donorsData || [];
+      this.recipients = recipientsData || [];
+
+      // 2. Populate Route Calculator dropdowns
       this.populateSelectDropdowns();
-      this.resizeCanvas();
-      this.setupCanvasClicks();
+
+      // 3. Initialize Interactive Leaflet Map (if Leaflet loaded)
+      if (window.L && this.mapContainer) {
+        this.initLeafletMap();
+      } else {
+        // Fallback to Canvas
+        if (this.canvas) {
+          this.canvas.style.display = 'block';
+          this.resizeCanvas();
+          this.setupCanvasClicks();
+        }
+      }
+
+      // 4. Calculate initial route
+      await this.calculateCurrentRoute();
+
+      // 5. Start live animation loop
       this.startGpsLoop();
+
+      // Window resize handling
+      window.addEventListener('resize', () => {
+        if (this.map) {
+          this.map.invalidateSize();
+        }
+        if (this.canvas) {
+          this.resizeCanvas();
+        }
+      });
     } catch (e) {
-      console.error('Failed to load road graph data:', e);
+      console.error('Failed to initialize Erode Road Graph Visualizer:', e);
+    }
+  }
+
+  initMapControls() {
+    // Tile layer switch buttons
+    const btnOsm = document.getElementById('btnTileOsm');
+    const btnCarto = document.getElementById('btnTileCarto');
+    const btnSat = document.getElementById('btnTileSat');
+    const btnRecenter = document.getElementById('btnRecenterErode');
+
+    const setActiveBtn = (activeBtn) => {
+      [btnOsm, btnCarto, btnSat].forEach(btn => {
+        if (btn) btn.classList.remove('active');
+      });
+      if (activeBtn) activeBtn.classList.add('active');
+    };
+
+    setActiveBtn(btnCarto);
+
+    if (btnOsm) {
+      btnOsm.addEventListener('click', () => {
+        this.switchTileLayer('osm');
+        setActiveBtn(btnOsm);
+      });
+    }
+    if (btnCarto) {
+      btnCarto.addEventListener('click', () => {
+        this.switchTileLayer('carto');
+        setActiveBtn(btnCarto);
+      });
+    }
+    if (btnSat) {
+      btnSat.addEventListener('click', () => {
+        this.switchTileLayer('sat');
+        setActiveBtn(btnSat);
+      });
+    }
+    if (btnRecenter) {
+      btnRecenter.addEventListener('click', () => {
+        this.recenterToErode();
+      });
     }
   }
 
@@ -83,7 +165,7 @@ class RoadGraphVisualizer {
         const rect = progressTrack.getBoundingClientRect();
         const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
         this.gpsProgress = clickRatio;
-        this.render();
+        this.updateVehiclePositionOnMap();
       });
     }
 
@@ -96,103 +178,285 @@ class RoadGraphVisualizer {
     });
   }
 
-  resizeCanvas() {
-    if (!this.canvas) return;
-    const parent = this.canvas.parentElement;
-    const rect = parent ? parent.getBoundingClientRect() : null;
-    let w = (rect && rect.width > 0) ? rect.width : (parent ? parent.clientWidth : 0);
-    if (!w || w <= 0) {
-      const container = document.querySelector('.graph-container') || document.querySelector('.main-content');
-      const cRect = container ? container.getBoundingClientRect() : null;
-      w = (cRect && cRect.width > 0) ? cRect.width * 0.65 : 720;
-    }
-    this.canvas.width = Math.round(w);
-    this.canvas.height = Math.round(Math.max(500, parent ? parent.clientHeight : 520));
-    this.render();
-  }
+  // =========================================================================
+  // LEAFLET REAL INTERACTIVE MAP INITIALIZATION & RENDERING
+  // =========================================================================
 
-  populateSelectDropdowns() {
-    const fromSelect = document.getElementById('routeFromSelect');
-    const toSelect = document.getElementById('routeToSelect');
-    const vehicleSelect = document.getElementById('routeVehicleSelect');
+  initLeafletMap() {
+    if (this.map) return;
 
-    if (!fromSelect || !toSelect) return;
+    // Erode City Coordinates: 11.3418° N, 77.7274° E
+    const erodeCenter = [11.3418, 77.7274];
 
-    fromSelect.innerHTML = '';
-    toSelect.innerHTML = '';
-
-    this.nodes.forEach(node => {
-      const opt1 = document.createElement('option');
-      opt1.value = node.id;
-      opt1.textContent = `${node.name} (${node.sector})`;
-      fromSelect.appendChild(opt1);
-
-      const opt2 = document.createElement('option');
-      opt2.value = node.id;
-      opt2.textContent = `${node.name} (${node.sector})`;
-      toSelect.appendChild(opt2);
+    // Create Map Instance
+    this.map = L.map('realRoadMap', {
+      center: erodeCenter,
+      zoom: 12,
+      zoomControl: false, // We'll customize zoom or let user zoom via wheel/pinch
+      attributionControl: false
     });
 
-    if (this.nodes.length >= 4) {
-      fromSelect.value = 'LOC_01'; // City Center
-      toSelect.value = 'LOC_04';   // South Riverside
-      this.selectedSource = 'LOC_01';
-      this.selectedTarget = 'LOC_04';
-    }
+    // Add sleek custom zoom control top-right so it never clashes with the HUD
+    L.control.zoom({ position: 'topright' }).addTo(this.map);
 
-    fromSelect.onchange = () => {
-      this.selectedSource = fromSelect.value;
-      this.calculateCurrentRoute();
+    // Tile Layer Definitions - Default to high-speed CDN CartoDB Voyager
+    this.tileLayers = {
+      carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19,
+        attribution: '&copy; CARTO'
+      }),
+      osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }),
+      sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Esri, Maxar, Earthstar Geographics'
+      })
     };
-    toSelect.onchange = () => {
-      this.selectedTarget = toSelect.value;
-      this.calculateCurrentRoute();
-    };
-    if (vehicleSelect) {
-      vehicleSelect.onchange = () => {
-        this.updateVehicleModel(vehicleSelect.value);
-        this.calculateCurrentRoute();
-      };
-    }
 
-    // Calculate initial route
-    this.updateVehicleModel(vehicleSelect ? vehicleSelect.value : '');
+    // Default to CartoDB Voyager for instantaneous sub-100ms loading
+    this.currentTileLayer = this.tileLayers.carto.addTo(this.map);
+
+    // Layer Groups for organized rendering
+    this.baseRoadsLayer = L.layerGroup().addTo(this.map);
+    this.routePolylineLayer = L.layerGroup().addTo(this.map);
+    this.nodesLayer = L.layerGroup().addTo(this.map);
+
+    // Draw Erode waterways (Cauvery & Bhavani rivers)
+    this.drawWaterwaysOnMap();
+
+    // Draw base Erode road network & nodes
+    this.drawBaseRoadNetworkOnMap();
+    this.drawMarkersOnMap();
+
+    // Invalidate size once DOM layout is settled and when animations finish
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 60);
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 300);
+    setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 800);
+  }
+
+  invalidateSize() {
+    if (this.map) {
+      this.map.invalidateSize();
+    }
+    if (this.canvas) {
+      this.resizeCanvas();
+    }
+  }
+
+  drawWaterwaysOnMap() {
+    if (!this.map || !this.baseRoadsLayer) return;
+
+    // Cauvery River flowing along north & east Erode
+    const cauveryPath = [
+      [11.4580, 77.6720],
+      [11.4468, 77.6835], // Bhavani Kooduthurai Confluence
+      [11.4400, 77.7050],
+      [11.4250, 77.7180],
+      [11.3900, 77.7320],
+      [11.3650, 77.7380],
+      [11.3530, 77.7430], // Historic Karungalpalayam - Pallipalayam bridge
+      [11.3350, 77.7500],
+      [11.3150, 77.7650], // Solar / Kokkarayanpettai bypass
+      [11.2700, 77.7850]
+    ];
+
+    const river = L.polyline(cauveryPath, {
+      color: '#38bdf8',
+      weight: 10,
+      opacity: 0.75,
+      lineCap: 'round',
+      lineJoin: 'round'
+    });
+    river.bindTooltip('🌊 Cauvery River (Erode Waterway Corridor)', { sticky: true });
+    river.addTo(this.baseRoadsLayer);
+
+    // Bhavani River coming from northwest into Kooduthurai
+    const bhavaniPath = [
+      [11.4650, 77.6500],
+      [11.4550, 77.6680],
+      [11.4468, 77.6835]
+    ];
+    const bhavaniRiver = L.polyline(bhavaniPath, {
+      color: '#0284c7',
+      weight: 7,
+      opacity: 0.7,
+      lineCap: 'round'
+    });
+    bhavaniRiver.bindTooltip('🌊 Bhavani River (Kooduthurai Sangameswarar Confluence)', { sticky: true });
+    bhavaniRiver.addTo(this.baseRoadsLayer);
+  }
+
+  switchTileLayer(layerType) {
+    if (!this.map || !this.tileLayers[layerType]) return;
+    if (this.currentTileLayer) {
+      this.map.removeLayer(this.currentTileLayer);
+    }
+    this.currentTileLayer = this.tileLayers[layerType].addTo(this.map);
+  }
+
+  recenterToErode() {
+    if (!this.map) return;
+    this.map.flyTo([11.3418, 77.7274], 12, {
+      duration: 1.2,
+      easeLinearity: 0.25
+    });
+  }
+
+  drawBaseRoadNetworkOnMap() {
+    if (!this.map || !this.baseRoadsLayer) return;
+    this.baseRoadsLayer.clearLayers();
+
+    this.edges.forEach(edge => {
+      const fromNode = this.nodes.find(n => n.id === edge.from);
+      const toNode = this.nodes.find(n => n.id === edge.to);
+      if (!fromNode || !toNode) return;
+
+      const pathPoints = edge.waypoints && edge.waypoints.length > 0
+        ? edge.waypoints
+        : [[fromNode.lat, fromNode.lng], [toNode.lat, toNode.lng]];
+
+      // 1. Road casing line
+      const casing = L.polyline(pathPoints, {
+        color: '#334155',
+        weight: 4.5,
+        opacity: 0.65,
+        lineCap: 'round',
+        lineJoin: 'round'
+      });
+
+      // 2. Road centerline with road name tooltip
+      const roadLine = L.polyline(pathPoints, {
+        color: '#64748b',
+        weight: 2.5,
+        opacity: 0.85,
+        dashArray: '4, 6'
+      });
+
+      const tooltipText = `<strong>${edge.roadName || 'Erode Connector'}</strong><br/>${edge.distanceKm} km • ~${edge.timeMinutes} mins`;
+      roadLine.bindTooltip(tooltipText, { sticky: true, opacity: 0.9 });
+
+      casing.addTo(this.baseRoadsLayer);
+      roadLine.addTo(this.baseRoadsLayer);
+    });
+  }
+
+  drawMarkersOnMap() {
+    if (!this.map || !this.nodesLayer) return;
+    this.nodesLayer.clearLayers();
+    this.markerMap.clear();
+
+    this.nodes.forEach(node => {
+      const isStart = this.highlightedPath[0] === node.id;
+      const isEnd = this.highlightedPath[this.highlightedPath.length - 1] === node.id;
+      const donor = this.donors.find(d => d.locationId === node.id);
+      const recipient = this.recipients.find(r => r.locationId === node.id);
+
+      let pinTypeClass = 'marker-pin-junction';
+      let pinEmoji = '🚏';
+      let tagBadge = `<span class="erode-popup-badge junction-tag">Transit Nexus</span>`;
+
+      if (donor) {
+        pinTypeClass = 'marker-pin-donor';
+        pinEmoji = '👨‍🍳';
+        tagBadge = `<span class="erode-popup-badge donor-tag">Food Donor</span>`;
+      } else if (recipient) {
+        pinTypeClass = 'marker-pin-recip';
+        pinEmoji = '🏠';
+        tagBadge = `<span class="erode-popup-badge recip-tag">Recipient Shelter</span>`;
+      }
+
+      // Custom HTML Marker Icon
+      const customIcon = L.divIcon({
+        className: 'erode-map-marker',
+        html: `
+          <div class="marker-pin-circle ${pinTypeClass}">
+            <span>${pinEmoji}</span>
+            ${donor ? '<span class="marker-pulse-ring"></span>' : ''}
+            ${recipient ? '<span class="marker-pulse-ring marker-pulse-ring-recip"></span>' : ''}
+          </div>
+          <span class="marker-tag-label">${node.name.split('&')[0].trim()}</span>
+        `,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22]
+      });
+
+      const marker = L.marker([node.lat, node.lng], { icon: customIcon });
+
+      // Rich Interactive Popup
+      let metaDetails = '';
+      if (donor) {
+        metaDetails = `
+          <div class="erode-popup-meta">
+            <div>👨‍🍳 <strong>${donor.name}</strong></div>
+            <div>📋 ${donor.type}</div>
+            <div>📍 ${donor.address || node.sector}</div>
+          </div>
+        `;
+      } else if (recipient) {
+        metaDetails = `
+          <div class="erode-popup-meta">
+            <div>🏠 <strong>${recipient.name}</strong></div>
+            <div>👥 Capacity: <strong>${recipient.capacity || 60} persons</strong></div>
+            <div>📍 ${recipient.address || node.sector}</div>
+          </div>
+        `;
+      } else {
+        metaDetails = `
+          <div class="erode-popup-meta">
+            <div>🚏 <strong>Major Transit Crossway</strong></div>
+            <div>📍 ${node.description || 'Interconnecting major Erode sectors'}</div>
+          </div>
+        `;
+      }
+
+      const popupHtml = `
+        <div class="erode-popup-card">
+          ${tagBadge}
+          <div class="erode-popup-title">${node.name}</div>
+          <div class="erode-popup-sector">📍 ${node.sector} (${node.id})</div>
+          ${metaDetails}
+          <div class="erode-popup-btn-row">
+            <button type="button" class="erode-popup-btn origin-btn" onclick="window.roadVisualizer.handleSetOrigin('${node.id}')">
+              🟢 Set Origin
+            </button>
+            <button type="button" class="erode-popup-btn target-btn" onclick="window.roadVisualizer.handleSetTarget('${node.id}')">
+              🏁 Set Destination
+            </button>
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupHtml, { minWidth: 240, maxWidth: 300 });
+
+      // Click on marker also alternates selection
+      marker.on('click', () => {
+        this.handleNodeClick(node.id);
+      });
+
+      marker.addTo(this.nodesLayer);
+      this.markerMap.set(node.id, marker);
+    });
+  }
+
+  handleSetOrigin(nodeId) {
+    this.selectedSource = nodeId;
+    const fromSelect = document.getElementById('routeFromSelect');
+    if (fromSelect) fromSelect.value = nodeId;
+    window.app?.showToast(`Origin set: ${this.getNodeName(nodeId)}`, 'info');
+    if (this.map) this.map.closePopup();
     this.calculateCurrentRoute();
   }
 
-  updateVehicleModel(vehicleId) {
-    if (vehicleId === 'veh_02') {
-      this.vehicleInfo = { id: 'veh_02', name: 'City Express Heavy (TRK-02)', type: 'truck', plate: 'KA-01-TR-9988', baseSpeed: 38 };
-    } else if (vehicleId === 'veh_03') {
-      this.vehicleInfo = { id: 'veh_03', name: 'Rapid Cargo Bike (MOTO-03)', type: 'bike', plate: 'KA-01-BK-4512', baseSpeed: 52 };
-    } else {
-      this.vehicleInfo = { id: 'veh_01', name: 'Eco-Van Alpha (EV-01)', type: 'van', plate: 'KA-01-EV-2024', baseSpeed: 44 };
-    }
-
-    const vehNameEl = document.getElementById('gpsVehicleName');
-    if (vehNameEl) vehNameEl.textContent = this.vehicleInfo.name;
-  }
-
-  setupCanvasClicks() {
-    this.canvas.addEventListener('click', (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const mouseX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
-      const mouseY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
-
-      const scaleX = this.canvas.width / 720;
-      const scaleY = this.canvas.height / 520;
-
-      for (const node of this.nodes) {
-        const nx = node.x * scaleX;
-        const ny = node.y * scaleY;
-        const dist = Math.hypot(nx - mouseX, ny - mouseY);
-
-        if (dist <= 26) {
-          this.handleNodeClick(node.id);
-          break;
-        }
-      }
-    });
+  handleSetTarget(nodeId) {
+    this.selectedTarget = nodeId;
+    const toSelect = document.getElementById('routeToSelect');
+    if (toSelect) toSelect.value = nodeId;
+    window.app?.showToast(`Destination set: ${this.getNodeName(nodeId)}`, 'info');
+    if (this.map) this.map.closePopup();
+    this.calculateCurrentRoute();
   }
 
   handleNodeClick(nodeId) {
@@ -203,7 +467,7 @@ class RoadGraphVisualizer {
       this.selectedSource = nodeId;
       this.selectedTarget = null;
       if (fromSelect) fromSelect.value = nodeId;
-      window.app?.showToast(`GPS Origin Set: ${this.getNodeName(nodeId)}`, 'info');
+      window.app?.showToast(`GPS Origin Set: ${this.getNodeName(nodeId)}. Now click destination.`, 'info');
     } else {
       this.selectedTarget = nodeId;
       if (toSelect) toSelect.value = nodeId;
@@ -212,6 +476,10 @@ class RoadGraphVisualizer {
     }
     this.render();
   }
+
+  // =========================================================================
+  // ROUTE COMPUTATION & DIJKSTRA VISUALIZATION
+  // =========================================================================
 
   async calculateCurrentRoute() {
     const fromSelect = document.getElementById('routeFromSelect');
@@ -227,7 +495,7 @@ class RoadGraphVisualizer {
     try {
       const route = await window.api.getShortestPath(from, to, vehicleId);
       this.currentRoute = route;
-      this.highlightRoute(route.path);
+      this.highlightRoute(route.path, route.fullCoordinates);
       this.updateRouteSummaryUI(route);
       this.gpsProgress = 0.0; // Reset trip animation to start
     } catch (err) {
@@ -235,10 +503,163 @@ class RoadGraphVisualizer {
     }
   }
 
-  highlightRoute(pathArray) {
+  highlightRoute(pathArray, customCoordinates = null) {
     this.highlightedPath = pathArray || [];
     this.highlightedNodes = new Set(this.highlightedPath);
+
+    if (this.highlightedPath.length >= 2) {
+      this.selectedSource = this.highlightedPath[0];
+      this.selectedTarget = this.highlightedPath[this.highlightedPath.length - 1];
+      const fromSelect = document.getElementById('routeFromSelect');
+      const toSelect = document.getElementById('routeToSelect');
+      if (fromSelect) fromSelect.value = this.selectedSource;
+      if (toSelect) toSelect.value = this.selectedTarget;
+    }
+
+    // Extract road coordinates along the path
+    if (customCoordinates && customCoordinates.length > 0) {
+      this.highlightedCoordinates = customCoordinates;
+    } else {
+      this.highlightedCoordinates = this.extractPathCoordinates(this.highlightedPath);
+    }
+
+    // Render on Leaflet Map
+    if (this.map && this.routePolylineLayer) {
+      this.renderRouteOnMap();
+    }
+
+    // Render on Canvas
     this.render();
+  }
+
+  extractPathCoordinates(path) {
+    if (!path || path.length < 2) return [];
+    const coords = [];
+
+    for (let i = 0; i < path.length - 1; i++) {
+      const u = path[i];
+      const v = path[i + 1];
+
+      // Check if there is an edge with waypoints
+      const edge = this.edges.find(e => (e.from === u && e.to === v) || (e.from === v && e.to === u));
+      if (edge && edge.waypoints && edge.waypoints.length > 0) {
+        const pts = edge.from === u ? edge.waypoints : [...edge.waypoints].reverse();
+        pts.forEach((pt, idx) => {
+          if (coords.length === 0 || idx > 0) coords.push(pt);
+        });
+      } else {
+        const uNode = this.nodes.find(n => n.id === u);
+        const vNode = this.nodes.find(n => n.id === v);
+        if (coords.length === 0 && uNode && uNode.lat) coords.push([uNode.lat, uNode.lng]);
+        if (vNode && vNode.lat) coords.push([vNode.lat, vNode.lng]);
+      }
+    }
+
+    return coords;
+  }
+
+  renderRouteOnMap() {
+    this.routePolylineLayer.clearLayers();
+
+    if (!this.highlightedCoordinates || this.highlightedCoordinates.length < 2) return;
+
+    // A. Outer Cyan Glow Line (Dijkstra Path Glow)
+    const glowPolyline = L.polyline(this.highlightedCoordinates, {
+      color: '#0ea5e9',
+      weight: 11,
+      opacity: 0.45,
+      lineCap: 'round',
+      lineJoin: 'round'
+    });
+
+    // B. Inner Emerald Road Route Line
+    const mainPolyline = L.polyline(this.highlightedCoordinates, {
+      color: '#059669',
+      weight: 5.5,
+      opacity: 0.95,
+      lineCap: 'round',
+      lineJoin: 'round'
+    });
+
+    // C. Dashed flowing chevron line
+    const flowPolyline = L.polyline(this.highlightedCoordinates, {
+      color: '#6ee7b7',
+      weight: 2.5,
+      opacity: 0.9,
+      dashArray: '10, 10'
+    });
+
+    glowPolyline.addTo(this.routePolylineLayer);
+    mainPolyline.addTo(this.routePolylineLayer);
+    flowPolyline.addTo(this.routePolylineLayer);
+
+    // Smoothly fly and frame the computed route
+    const bounds = L.latLngBounds(this.highlightedCoordinates);
+    this.map.flyToBounds(bounds, {
+      padding: [80, 80],
+      duration: 1.0,
+      maxZoom: 14
+    });
+
+    // Initialize or update Vehicle Marker on Map
+    this.initVehicleMarkerOnMap();
+  }
+
+  initVehicleMarkerOnMap() {
+    if (!this.map || this.highlightedCoordinates.length === 0) return;
+
+    const startPos = this.highlightedCoordinates[0];
+    const vehEmoji = this.vehicleInfo.type === 'truck' ? '🚛' : (this.vehicleInfo.type === 'bike' ? '🛵' : '🚚');
+
+    const vehicleIcon = L.divIcon({
+      className: 'vehicle-map-marker',
+      html: `
+        <div class="vehicle-marker-box" id="vehicleMarkerIcon">
+          <span>${vehEmoji}</span>
+          <span class="vehicle-pulse-ring"></span>
+        </div>
+        <div class="vehicle-map-tag">${this.vehicleInfo.plate}</div>
+      `,
+      iconSize: [48, 54],
+      iconAnchor: [24, 27]
+    });
+
+    if (this.vehicleMarker) {
+      this.vehicleMarker.setLatLng(startPos);
+      this.vehicleMarker.setIcon(vehicleIcon);
+    } else {
+      this.vehicleMarker = L.marker(startPos, { icon: vehicleIcon, zIndexOffset: 2000 });
+      this.vehicleMarker.addTo(this.map);
+    }
+  }
+
+  updateVehiclePositionOnMap() {
+    if (!this.vehicleMarker || !this.highlightedCoordinates || this.highlightedCoordinates.length < 2) return;
+
+    const totalPoints = this.highlightedCoordinates.length - 1;
+    const progressIndex = Math.min(Math.floor(this.gpsProgress * totalPoints), totalPoints - 1);
+    const subProgress = (this.gpsProgress * totalPoints) - progressIndex;
+
+    const p1 = this.highlightedCoordinates[progressIndex];
+    const p2 = this.highlightedCoordinates[progressIndex + 1];
+
+    if (!p1 || !p2) return;
+
+    const curLat = p1[0] + (p2[0] - p1[0]) * subProgress;
+    const curLng = p1[1] + (p2[1] - p1[1]) * subProgress;
+
+    this.vehicleMarker.setLatLng([curLat, curLng]);
+
+    // Heading rotation
+    const dLat = p2[0] - p1[0];
+    const dLng = p2[1] - p1[1];
+    const angleRad = Math.atan2(dLng, dLat);
+    const angleDeg = (angleRad * 180 / Math.PI);
+
+    const vehIconEl = document.getElementById('vehicleMarkerIcon');
+    if (vehIconEl) {
+      vehIconEl.style.transform = `rotate(${angleDeg}deg)`;
+    }
   }
 
   updateRouteSummaryUI(route) {
@@ -258,17 +679,22 @@ class RoadGraphVisualizer {
         </span>
       </div>
       <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">
-        Legs: <span style="font-family:var(--font-mono); color:var(--text-main); font-weight:700;">${route.path.length - 1} road segments</span>
+        Road Traversals: <span style="font-family:var(--font-mono); color:var(--text-main); font-weight:700;">${route.path.length - 1} connected sectors in Erode</span>
       </div>
       <div class="route-steps-list">
-        ${route.path.map((nodeId, idx) => `
-          <div class="route-step-node" id="stepNode_${idx}">
-            <span class="node-dot ${idx === 0 ? 'active' : ''}"></span>
-            <span style="font-family:var(--font-mono); font-size:0.75rem; color:#059669; font-weight:800;">${idx + 1}.</span>
-            <span style="font-weight:700; color:var(--text-main);">${this.getNodeName(nodeId)}</span>
-            <span style="font-size:0.72rem; color:var(--text-dim); margin-left:auto; font-family:var(--font-mono);">${nodeId}</span>
-          </div>
-        `).join('')}
+        ${route.path.map((nodeId, idx) => {
+          const loc = this.nodes.find(n => n.id === nodeId);
+          const edgeInfo = route.edgesTraversed ? route.edgesTraversed[idx] : null;
+          return `
+            <div class="route-step-node" id="stepNode_${idx}">
+              <span class="node-dot ${idx === 0 ? 'active' : ''}"></span>
+              <span style="font-family:var(--font-mono); font-size:0.75rem; color:#059669; font-weight:800;">${idx + 1}.</span>
+              <span style="font-weight:700; color:var(--text-main);">${this.getNodeName(nodeId)}</span>
+              ${edgeInfo?.roadName ? `<span style="font-size:0.72rem; color:var(--primary); font-style:italic;">[via ${edgeInfo.roadName}]</span>` : ''}
+              <span style="font-size:0.72rem; color:var(--text-dim); margin-left:auto; font-family:var(--font-mono);">${nodeId}</span>
+            </div>
+          `;
+        }).join('')}
       </div>
     `;
   }
@@ -278,22 +704,101 @@ class RoadGraphVisualizer {
     return n ? n.name : id;
   }
 
+  populateSelectDropdowns() {
+    const fromSelect = document.getElementById('routeFromSelect');
+    const toSelect = document.getElementById('routeToSelect');
+    const vehicleSelect = document.getElementById('routeVehicleSelect');
+
+    if (!fromSelect || !toSelect) return;
+
+    fromSelect.innerHTML = '';
+    toSelect.innerHTML = '';
+
+    this.nodes.forEach(node => {
+      const isDonor = this.donors.some(d => d.locationId === node.id);
+      const isRecip = this.recipients.some(r => r.locationId === node.id);
+      const prefix = isDonor ? '👨‍🍳 ' : (isRecip ? '🏠 ' : '🚏 ');
+
+      const opt1 = document.createElement('option');
+      opt1.value = node.id;
+      opt1.textContent = `${prefix}${node.name} (${node.sector})`;
+      fromSelect.appendChild(opt1);
+
+      const opt2 = document.createElement('option');
+      opt2.value = node.id;
+      opt2.textContent = `${prefix}${node.name} (${node.sector})`;
+      toSelect.appendChild(opt2);
+    });
+
+    if (this.nodes.length >= 3) {
+      fromSelect.value = 'LOC_01'; // PS Park (Junior Kuppanna)
+      toSelect.value = 'LOC_03';   // Erode Junction (Karunai Illam)
+      this.selectedSource = 'LOC_01';
+      this.selectedTarget = 'LOC_03';
+    }
+
+    fromSelect.onchange = () => {
+      this.selectedSource = fromSelect.value;
+      this.calculateCurrentRoute();
+    };
+    toSelect.onchange = () => {
+      this.selectedTarget = toSelect.value;
+      this.calculateCurrentRoute();
+    };
+    if (vehicleSelect) {
+      vehicleSelect.onchange = () => {
+        this.updateVehicleModel(vehicleSelect.value);
+        this.calculateCurrentRoute();
+      };
+    }
+  }
+
+  updateVehicleModel(vehicleId) {
+    if (vehicleId === 'veh_02') {
+      this.vehicleInfo = { id: 'veh_02', name: 'Kongu Express Heavy (TRK-02)', type: 'truck', plate: 'TN-33-TR-9988', baseSpeed: 38 };
+    } else if (vehicleId === 'veh_03') {
+      this.vehicleInfo = { id: 'veh_03', name: 'Bhavani Rapid Cargo Bike (MOTO-03)', type: 'bike', plate: 'TN-33-BK-4512', baseSpeed: 52 };
+    } else {
+      this.vehicleInfo = { id: 'veh_01', name: 'Eco-Van Alpha (EV-01)', type: 'van', plate: 'TN-33-AX-2024', baseSpeed: 44 };
+    }
+
+    const vehNameEl = document.getElementById('gpsVehicleName');
+    if (vehNameEl) vehNameEl.textContent = this.vehicleInfo.name;
+
+    if (this.vehicleMarker) {
+      this.initVehicleMarkerOnMap();
+    }
+  }
+
+  // =========================================================================
+  // ANIMATION LOOP & HUD TELEMETRY UPDATE
+  // =========================================================================
+
   startGpsLoop() {
     const loop = () => {
       this.pulseAngle += 0.05;
 
       if (this.gpsPlaying && this.highlightedPath.length > 1) {
         // Increment GPS progress along route
-        const speedStep = 0.0022 * this.gpsSpeedFactor;
+        const speedStep = 0.0020 * this.gpsSpeedFactor;
         this.gpsProgress += speedStep;
         if (this.gpsProgress > 1.0) {
           this.gpsProgress = 0.0; // Loop trip continuously
         }
-        this.dashOffset -= 1.8; // Forward flowing chevrons
+        this.dashOffset -= 1.8; // Flow chevrons
       }
 
       this.updateGpsHudTelemetry();
-      this.render();
+
+      // Update Leaflet marker position
+      if (this.map) {
+        this.updateVehiclePositionOnMap();
+      }
+
+      // Render canvas fallback if canvas is shown
+      if (this.canvas && this.canvas.style.display !== 'none') {
+        this.renderCanvasFallback();
+      }
 
       this.animationId = requestAnimationFrame(loop);
     };
@@ -333,7 +838,7 @@ class RoadGraphVisualizer {
     const speedEl = document.getElementById('gpsSpeedValue');
     if (speedEl) speedEl.textContent = liveSpeed;
 
-    // Turn instruction
+    // Turn instruction with road details
     const totalSegments = this.highlightedPath.length - 1;
     const segmentIndex = Math.min(Math.floor(this.gpsProgress * totalSegments), totalSegments - 1);
     const currNodeId = this.highlightedPath[segmentIndex];
@@ -347,34 +852,73 @@ class RoadGraphVisualizer {
         turnIconEl.textContent = '🏁';
         turnTextEl.textContent = `Arriving at ${this.getNodeName(nextNodeId)} (Shelter Delivery Point)`;
       } else {
+        const edge = this.edges.find(e => (e.from === currNodeId && e.to === nextNodeId) || (e.from === nextNodeId && e.to === currNodeId));
+        const road = edge?.roadName ? ` via ${edge.roadName}` : '';
         turnIconEl.textContent = '➔';
-        turnTextEl.textContent = `En Route: ${this.getNodeName(currNodeId)} ➔ Next: ${this.getNodeName(nextNodeId)}`;
+        turnTextEl.textContent = `En Route: ${this.getNodeName(currNodeId)} ➔ ${this.getNodeName(nextNodeId)}${road}`;
       }
     }
   }
 
+  // =========================================================================
+  // CANVAS FALLBACK IMPLEMENTATION (Ensures 100% offline & backup resilience)
+  // =========================================================================
+
+  resizeCanvas() {
+    if (!this.canvas) return;
+    const parent = this.canvas.parentElement;
+    const w = parent ? parent.clientWidth : 720;
+    const h = parent ? parent.clientHeight : 560;
+    this.canvas.width = Math.round(w > 0 ? w : 720);
+    this.canvas.height = Math.round(h > 0 ? h : 560);
+  }
+
+  setupCanvasClicks() {
+    if (!this.canvas) return;
+    this.canvas.addEventListener('click', (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) * (this.canvas.width / rect.width);
+      const mouseY = (e.clientY - rect.top) * (this.canvas.height / rect.height);
+
+      const scaleX = this.canvas.width / 720;
+      const scaleY = this.canvas.height / 520;
+
+      for (const node of this.nodes) {
+        const nx = (node.x || 360) * scaleX;
+        const ny = (node.y || 260) * scaleY;
+        const dist = Math.hypot(nx - mouseX, ny - mouseY);
+
+        if (dist <= 26) {
+          this.handleNodeClick(node.id);
+          break;
+        }
+      }
+    });
+  }
+
   render() {
-    if (!this.ctx || !this.canvas) return;
-    if (this.canvas.width <= 0 || this.canvas.height <= 0) {
-      this.resizeCanvas();
+    if (this.canvas && this.canvas.style.display !== 'none') {
+      this.renderCanvasFallback();
     }
+  }
+
+  renderCanvasFallback() {
+    if (!this.ctx || !this.canvas) return;
     const ctx = this.ctx;
     const w = this.canvas.width || 720;
-    const h = this.canvas.height || 520;
+    const h = this.canvas.height || 560;
     if (w <= 0 || h <= 0) return;
 
     ctx.clearRect(0, 0, w, h);
 
-    // ==========================================
-    // 1. SLEEK GPS NAVIGATION MAP BACKGROUND
-    // ==========================================
+    // Dark sleek navigation gradient
     const bgGrad = ctx.createLinearGradient(0, 0, w, h);
-    bgGrad.addColorStop(0, '#0f172a'); // Slate 900
-    bgGrad.addColorStop(1, '#020617'); // Slate 950
+    bgGrad.addColorStop(0, '#0f172a');
+    bgGrad.addColorStop(1, '#020617');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // Subtle GPS grid lines
+    // Subtle GPS grid
     ctx.strokeStyle = 'rgba(51, 65, 85, 0.35)';
     ctx.lineWidth = 1;
     for (let x = 0; x < w; x += 48) {
@@ -390,27 +934,20 @@ class RoadGraphVisualizer {
       ctx.stroke();
     }
 
-    // Coordinate scale factors (base domain: 720 x 520)
     const scaleX = w / 720;
     const scaleY = h / 520;
 
     const nodePosMap = new Map();
     this.nodes.forEach(n => {
-      nodePosMap.set(n.id, { x: n.x * scaleX, y: n.y * scaleY });
+      nodePosMap.set(n.id, { x: (n.x || 360) * scaleX, y: (n.y || 260) * scaleY });
     });
 
-    // ==========================================
-    // 2. DRAW BASE ROAD NETWORK (GRAY STREETS)
-    // ==========================================
+    // Draw base road edges
     this.edges.forEach(edge => {
       const fromPos = nodePosMap.get(edge.from);
       const toPos = nodePosMap.get(edge.to);
       if (!fromPos || !toPos) return;
 
-      const isPathEdge = this.isEdgeInPath(edge.from, edge.to);
-      if (isPathEdge) return; // Drawn in glowing GPS pass below
-
-      // Road casing
       ctx.beginPath();
       ctx.moveTo(fromPos.x, fromPos.y);
       ctx.lineTo(toPos.x, toPos.y);
@@ -419,305 +956,64 @@ class RoadGraphVisualizer {
       ctx.lineCap = 'round';
       ctx.stroke();
 
-      // Road centerline
       ctx.beginPath();
       ctx.moveTo(fromPos.x, fromPos.y);
       ctx.lineTo(toPos.x, toPos.y);
       ctx.strokeStyle = '#1e293b';
       ctx.lineWidth = 2;
       ctx.stroke();
-
-      // Metrics pill at midpoint
-      const midX = (fromPos.x + toPos.x) / 2;
-      const midY = (fromPos.y + toPos.y) / 2;
-      ctx.fillStyle = '#64748b';
-      ctx.font = '600 8.5px "JetBrains Mono", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${edge.distanceKm}k`, midX, midY - 3);
     });
 
-    // ==========================================
-    // 3. DRAW ACTIVE GLOWING GPS ROUTE
-    // ==========================================
+    // Draw active glowing path
     if (this.highlightedPath.length > 1) {
-      this.drawGpsRoutePolyline(nodePosMap);
+      ctx.beginPath();
+      for (let i = 0; i < this.highlightedPath.length; i++) {
+        const p = nodePosMap.get(this.highlightedPath[i]);
+        if (p) {
+          if (i === 0) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        }
+      }
+      ctx.strokeStyle = 'rgba(14, 165, 233, 0.35)';
+      ctx.lineWidth = 14;
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i < this.highlightedPath.length; i++) {
+        const p = nodePosMap.get(this.highlightedPath[i]);
+        if (p) {
+          if (i === 0) ctx.moveTo(p.x, p.y);
+          else ctx.lineTo(p.x, p.y);
+        }
+      }
+      ctx.strokeStyle = '#059669';
+      ctx.lineWidth = 5;
+      ctx.stroke();
     }
 
-    // ==========================================
-    // 4. DRAW ALL SECTOR NODES & BEACONS
-    // ==========================================
+    // Draw nodes
     this.nodes.forEach(node => {
       const pos = nodePosMap.get(node.id);
       if (!pos) return;
 
       const isStart = this.highlightedPath[0] === node.id;
       const isEnd = this.highlightedPath[this.highlightedPath.length - 1] === node.id;
-      const isWayPoint = this.highlightedNodes.has(node.id) && !isStart && !isEnd;
+      const isDonor = this.donors.some(d => d.locationId === node.id);
+      const isRecip = this.recipients.some(r => r.locationId === node.id);
 
-      if (isStart) {
-        // Pulsing Pickup Radar Rings
-        const ring1 = (this.pulseAngle * 12) % 32;
-        const ring2 = ((this.pulseAngle * 12) + 16) % 32;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, isStart || isEnd ? 10 : 7, 0, Math.PI * 2);
+      ctx.fillStyle = isDonor ? '#10b981' : (isRecip ? '#0284c7' : '#64748b');
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
 
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, ring1, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(16, 185, 129, ${Math.max(0, 1 - ring1 / 32)})`;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, ring2, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(16, 185, 129, ${Math.max(0, 1 - ring2 / 32)})`;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Pin body
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 11, 0, Math.PI * 2);
-        ctx.fillStyle = '#10b981';
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Label Tag
-        ctx.fillStyle = '#34d399';
-        ctx.font = 'bold 9px "JetBrains Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('📍 PICKUP', pos.x, pos.y - 16);
-
-      } else if (isEnd) {
-        // Destination Target Pulsing Rings
-        const ring = (this.pulseAngle * 10) % 28;
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, ring, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(245, 158, 11, ${Math.max(0, 1 - ring / 28)})`;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 11, 0, Math.PI * 2);
-        ctx.fillStyle = '#f59e0b';
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 9px "JetBrains Mono", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('🏁 DELIVERY', pos.x, pos.y - 16);
-
-      } else if (isWayPoint) {
-        // Active route waypoint
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
-        ctx.fillStyle = '#0284c7';
-        ctx.fill();
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-      } else {
-        // Standard City Hub
-        ctx.beginPath();
-        ctx.arc(pos.x, pos.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#475569';
-        ctx.fill();
-        ctx.strokeStyle = '#1e293b';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      // Node Name Label
-      ctx.font = (isStart || isEnd) ? 'bold 11px "Plus Jakarta Sans", sans-serif' : '600 9.5px "Plus Jakarta Sans", sans-serif';
-      ctx.fillStyle = (isStart || isEnd) ? '#ffffff' : (isWayPoint ? '#e2e8f0' : '#94a3b8');
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.fillText(node.name, pos.x, pos.y + 22);
-
-      // Node Sector ID
-      ctx.font = '500 8px "JetBrains Mono", monospace';
-      ctx.fillStyle = isStart ? '#34d399' : (isEnd ? '#fbbf24' : '#64748b');
-      ctx.fillText(node.id, pos.x, pos.y + 33);
+      ctx.fillText(node.name.split('&')[0].trim(), pos.x, pos.y + 20);
     });
-
-    // ==========================================
-    // 5. DRAW LIVE GPS TRACKING VEHICLE
-    // ==========================================
-    if (this.highlightedPath.length > 1) {
-      this.drawGpsVehicleMarker(nodePosMap);
-    }
-  }
-
-  drawGpsRoutePolyline(posMap) {
-    const ctx = this.ctx;
-
-    // A. Outer Cyan Glow Layer
-    ctx.beginPath();
-    for (let i = 0; i < this.highlightedPath.length; i++) {
-      const p = posMap.get(this.highlightedPath[i]);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    }
-    ctx.strokeStyle = 'rgba(14, 165, 233, 0.35)';
-    ctx.lineWidth = 14;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-
-    // B. Solid High-Visibility Route Track
-    ctx.beginPath();
-    for (let i = 0; i < this.highlightedPath.length; i++) {
-      const p = posMap.get(this.highlightedPath[i]);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    }
-    ctx.strokeStyle = '#059669';
-    ctx.lineWidth = 6;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-
-    // C. Forward-Animated Flow Chevrons (GPS Motion Effect)
-    ctx.beginPath();
-    for (let i = 0; i < this.highlightedPath.length; i++) {
-      const p = posMap.get(this.highlightedPath[i]);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    }
-    ctx.strokeStyle = '#6ee7b7';
-    ctx.lineWidth = 2.5;
-    ctx.setLineDash([10, 8]);
-    ctx.lineDashOffset = this.dashOffset;
-    ctx.stroke();
-    ctx.setLineDash([]); // Reset line dash
-  }
-
-  drawGpsVehicleMarker(posMap) {
-    const ctx = this.ctx;
-    const totalSegments = this.highlightedPath.length - 1;
-    const segmentIndex = Math.min(Math.floor(this.gpsProgress * totalSegments), totalSegments - 1);
-    const subProgress = (this.gpsProgress * totalSegments) - segmentIndex;
-
-    const u = this.highlightedPath[segmentIndex];
-    const v = this.highlightedPath[segmentIndex + 1];
-    const p1 = posMap.get(u);
-    const p2 = posMap.get(v);
-
-    if (!p1 || !p2) return;
-
-    const currentX = p1.x + (p2.x - p1.x) * subProgress;
-    const currentY = p1.y + (p2.y - p1.y) * subProgress;
-    const headingAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-
-    // 1. Pulsing GPS Location Wave under vehicle
-    const gpsRipple = (this.pulseAngle * 10) % 24;
-    ctx.beginPath();
-    ctx.arc(currentX, currentY, gpsRipple, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(56, 189, 248, ${Math.max(0, 0.8 - gpsRipple / 24)})`;
-    ctx.lineWidth = 1.8;
-    ctx.stroke();
-
-    // 2. Headlight Beams illuminating forward road
-    ctx.save();
-    ctx.translate(currentX, currentY);
-    ctx.rotate(headingAngle);
-
-    // Left headlight beam
-    const headGrad = ctx.createLinearGradient(0, 0, 36, 0);
-    headGrad.addColorStop(0, 'rgba(254, 240, 138, 0.7)');
-    headGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
-
-    ctx.beginPath();
-    ctx.moveTo(10, -4);
-    ctx.lineTo(38, -14);
-    ctx.lineTo(38, 14);
-    ctx.lineTo(10, 4);
-    ctx.closePath();
-    ctx.fillStyle = headGrad;
-    ctx.fill();
-
-    // 3. Vehicle Body Geometry
-    // Vehicle drop shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.beginPath();
-    ctx.roundRect(-12, -7, 24, 14, 4);
-    ctx.fill();
-
-    // Chassis color according to vehicle type
-    if (this.vehicleInfo.type === 'truck') {
-      // Medium Truck
-      ctx.fillStyle = '#0284c7';
-      ctx.beginPath();
-      ctx.roundRect(-14, -8, 28, 16, 3);
-      ctx.fill();
-
-      // Cargo box
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(-12, -7, 18, 14);
-
-      // Cab windshield
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(8, -6, 5, 12);
-    } else if (this.vehicleInfo.type === 'bike') {
-      // Rapid Cargo Bike
-      ctx.fillStyle = '#f59e0b';
-      ctx.beginPath();
-      ctx.roundRect(-8, -4, 18, 8, 3);
-      ctx.fill();
-
-      // Helmet / Rider
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // Electric Van (Eco-Van Alpha)
-      ctx.fillStyle = '#10b981';
-      ctx.beginPath();
-      ctx.roundRect(-12, -7, 25, 14, 4);
-      ctx.fill();
-
-      // Windshield
-      ctx.fillStyle = '#047857';
-      ctx.fillRect(6, -5, 5, 10);
-
-      // Roof battery icon
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-5, -2, 7, 4);
-    }
-
-    // Tail lights
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(-12, -6, 2, 3);
-    ctx.fillRect(-12, 3, 2, 3);
-
-    ctx.restore();
-
-    // 4. Floating GPS Telemetry Tooltip above vehicle
-    const tooltipY = currentY - 24;
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(currentX - 54, tooltipY - 10, 108, 18, 5);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 9px "JetBrains Mono", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🚐 ${this.vehicleInfo.plate}`, currentX, tooltipY + 3);
-  }
-
-  isEdgeInPath(u, v) {
-    if (!this.highlightedPath || this.highlightedPath.length < 2) return false;
-    for (let i = 0; i < this.highlightedPath.length - 1; i++) {
-      const a = this.highlightedPath[i];
-      const b = this.highlightedPath[i + 1];
-      if ((a === u && b === v) || (a === v && b === u)) return true;
-    }
-    return false;
   }
 }
 

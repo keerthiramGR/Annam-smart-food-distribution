@@ -122,13 +122,37 @@ function findShortestRoute(sourceId, destinationId, vehicleSpeedMultiplier = 1.0
         from: prevInfo.from,
         to: curr,
         distanceKm: prevInfo.edge.distanceKm,
-        timeMinutes: prevInfo.edge.timeMinutes
+        timeMinutes: prevInfo.edge.timeMinutes,
+        roadName: prevInfo.edge.roadName || 'City Road',
+        waypoints: prevInfo.edge.waypoints || null
       });
       curr = prevInfo.from;
     } else {
       curr = null;
     }
   }
+
+  // Construct continuous full route waypoints for real map visualizer
+  const fullCoordinates = [];
+  edgesTraversed.forEach((seg, idx) => {
+    if (seg.waypoints && seg.waypoints.length > 0) {
+      seg.waypoints.forEach((pt, ptIdx) => {
+        // Avoid duplicate adjoining points
+        if (fullCoordinates.length === 0 || ptIdx > 0) {
+          fullCoordinates.push(pt);
+        }
+      });
+    } else {
+      const fromLoc = locationMap.get(seg.from);
+      const toLoc = locationMap.get(seg.to);
+      if (idx === 0 && fromLoc && fromLoc.lat) {
+        fullCoordinates.push([fromLoc.lat, fromLoc.lng]);
+      }
+      if (toLoc && toLoc.lat) {
+        fullCoordinates.push([toLoc.lat, toLoc.lng]);
+      }
+    }
+  });
 
   const rawMinutes = times[destinationId];
   // Speed multiplier adjustments (e.g. 1.25x bike is faster -> divide minutes by factor)
@@ -144,6 +168,7 @@ function findShortestRoute(sourceId, destinationId, vehicleSpeedMultiplier = 1.0
     totalTimeMinutes: rawMinutes,
     adjustedTimeMinutes: adjustedMinutes,
     edgesTraversed,
+    fullCoordinates,
     found: true
   };
 }

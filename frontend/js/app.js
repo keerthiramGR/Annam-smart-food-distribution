@@ -12,6 +12,7 @@ class App {
     this.donorCtrl = null;
     this.recipientCtrl = null;
     this.adminCtrl = null;
+    this.driverCtrl = null;
     this.roadVisualizer = null;
 
     this.init();
@@ -31,19 +32,22 @@ class App {
     this.donorCtrl = new window.DonorController();
     this.recipientCtrl = new window.RecipientController();
     this.adminCtrl = new window.AdminController();
+    this.driverCtrl = new window.DriverController();
     this.roadVisualizer = new window.RoadGraphVisualizer('roadGraphCanvas');
 
     window.donorCtrl = this.donorCtrl;
     window.recipientCtrl = this.recipientCtrl;
     window.adminCtrl = this.adminCtrl;
+    window.driverCtrl = this.driverCtrl;
     window.roadVisualizer = this.roadVisualizer;
   }
 
   initEventListeners() {
-    // 3-Door Login Buttons
+    // 4-Door Login Buttons
     const btnLoginDonor = document.getElementById('btnLoginDonor');
     const btnLoginRecipient = document.getElementById('btnLoginRecipient');
     const btnLoginAdmin = document.getElementById('btnLoginAdmin');
+    const btnLoginDriver = document.getElementById('btnLoginDriver');
 
     if (btnLoginDonor) {
       btnLoginDonor.addEventListener('click', () => {
@@ -71,6 +75,17 @@ class App {
       btnLoginAdmin.addEventListener('click', () => {
         if (this.accounts.admin) {
           this.loginAs(this.accounts.admin, 'SUPER_ADMIN');
+        }
+      });
+    }
+
+    if (btnLoginDriver) {
+      btnLoginDriver.addEventListener('click', () => {
+        const sel = document.getElementById('loginDriverSelect');
+        const vehId = sel ? sel.value : null;
+        const driver = (this.accounts.vehicles || []).find(v => v.id === vehId) || (this.accounts.vehicles ? this.accounts.vehicles[0] : null);
+        if (driver) {
+          this.loginAs({ ...driver, role: 'DRIVER', name: driver.driverName }, 'DRIVER');
         }
       });
     }
@@ -325,6 +340,7 @@ class App {
   populateLoginDropdowns() {
     const donorSel = document.getElementById('loginDonorSelect');
     const recipSel = document.getElementById('loginRecipSelect');
+    const driverSel = document.getElementById('loginDriverSelect');
 
     if (donorSel && this.accounts.donors) {
       donorSel.innerHTML = this.accounts.donors.map(d => `
@@ -335,6 +351,12 @@ class App {
     if (recipSel && this.accounts.recipients) {
       recipSel.innerHTML = this.accounts.recipients.map(r => `
         <option value="${r.id}">${r.name} (${r.category} - ${r.locationId})</option>
+      `).join('');
+    }
+
+    if (driverSel && this.accounts.vehicles) {
+      driverSel.innerHTML = this.accounts.vehicles.map(v => `
+        <option value="${v.id}">${v.driverName} - ${v.name} (${v.plateNumber})</option>
       `).join('');
     }
   }
@@ -372,6 +394,10 @@ class App {
     document.getElementById('mainRoleNav').style.display = 'none';
     document.getElementById('headerProfileBadge').style.display = 'none';
     document.getElementById('btnLogout').style.display = 'none';
+
+    setTimeout(() => {
+      this.roadVisualizer?.invalidateSize();
+    }, 60);
   }
 
   loginAs(user, role) {
@@ -388,11 +414,14 @@ class App {
     this.switchRole(role, user);
     this.showToast(`Logged in successfully as ${user.name} (${role})`, 'success');
 
-    // Ensure road network canvas resizes and computes initial route once visible
+    // Ensure road network and Leaflet map resizes and computes initial route once visible
     setTimeout(() => {
-      this.roadVisualizer?.resizeCanvas();
+      this.roadVisualizer?.invalidateSize();
       this.roadVisualizer?.calculateCurrentRoute();
     }, 60);
+    setTimeout(() => {
+      this.roadVisualizer?.invalidateSize();
+    }, 300);
   }
 
   logout() {
@@ -426,14 +455,30 @@ class App {
         this.switchUser(this.accounts.admin);
         this.adminCtrl?.init();
       }
+    } else if (role === 'DRIVER') {
+      document.getElementById('viewDriver')?.classList.add('active');
+      let targetDriver = specificUser;
+      if (!targetDriver) {
+        if (typeof specificUser === 'string') {
+          targetDriver = (this.accounts.vehicles || []).find(v => v.id === specificUser);
+        } else if (this.currentUser?.role === 'DRIVER') {
+          targetDriver = this.currentUser;
+        } else {
+          targetDriver = (this.accounts.vehicles && this.accounts.vehicles.length > 0) ? this.accounts.vehicles[0] : null;
+        }
+      }
+      if (targetDriver) {
+        this.switchUser({ ...targetDriver, role: 'DRIVER', name: targetDriver.driverName || targetDriver.name });
+        this.driverCtrl?.init(targetDriver);
+      }
     }
 
     // Scroll to top of dashboard
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Ensure road graph visualizer adapts to updated viewport
+    // Ensure road graph visualizer and Leaflet map adapts to updated viewport
     setTimeout(() => {
-      this.roadVisualizer?.resizeCanvas();
+      this.roadVisualizer?.invalidateSize();
     }, 60);
   }
 
@@ -442,8 +487,10 @@ class App {
     if (role === 'DONOR') user = this.accounts.donors.find(d => d.id === id);
     else if (role === 'RECIPIENT') user = this.accounts.recipients.find(r => r.id === id);
     else if (role === 'SUPER_ADMIN') user = this.accounts.admin;
+    else if (role === 'DRIVER') user = (this.accounts.vehicles || []).find(v => v.id === id);
 
     if (user) {
+      if (role === 'DRIVER') user = { ...user, role: 'DRIVER', name: user.driverName || user.name };
       this.switchUser(user);
     }
   }
@@ -459,6 +506,8 @@ class App {
       this.recipientCtrl?.setRecipient(user);
     } else if (user.role === 'SUPER_ADMIN') {
       this.adminCtrl?.init();
+    } else if (user.role === 'DRIVER') {
+      this.driverCtrl?.init(user);
     }
   }
 
@@ -468,9 +517,11 @@ class App {
     const roleEl = document.getElementById('headerUserRole');
     const avatarEl = document.getElementById('headerUserAvatar');
 
-    if (nameEl) nameEl.textContent = this.currentUser.name;
-    if (roleEl) roleEl.textContent = this.currentUser.role.replace('_', ' ');
-    if (avatarEl && this.currentUser.avatar) avatarEl.src = this.currentUser.avatar;
+    if (nameEl) nameEl.textContent = this.currentUser.driverName || this.currentUser.name;
+    if (roleEl) roleEl.textContent = this.currentUser.role ? this.currentUser.role.replace('_', ' ') : 'USER';
+    if (avatarEl) {
+      avatarEl.src = this.currentUser.avatar || 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=150&auto=format&fit=crop&q=80';
+    }
   }
 
   async refreshStats() {
