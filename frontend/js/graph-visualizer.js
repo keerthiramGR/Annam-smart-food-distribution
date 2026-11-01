@@ -106,21 +106,21 @@ class RoadGraphVisualizer {
     }
   }
 
-  initMapControls() {
+    initMapControls() {
     // Tile layer switch buttons
     const btnOsm = document.getElementById('btnTileOsm');
-    const btnCarto = document.getElementById('btnTileCarto');
+    const btnStreets = document.getElementById('btnTileStreets');
     const btnSat = document.getElementById('btnTileSat');
     const btnRecenter = document.getElementById('btnRecenterErode');
 
     const setActiveBtn = (activeBtn) => {
-      [btnOsm, btnCarto, btnSat].forEach(btn => {
+      [btnOsm, btnStreets, btnSat].forEach(btn => {
         if (btn) btn.classList.remove('active');
       });
       if (activeBtn) activeBtn.classList.add('active');
     };
 
-    setActiveBtn(btnCarto);
+    setActiveBtn(btnOsm);
 
     if (btnOsm) {
       btnOsm.addEventListener('click', () => {
@@ -128,10 +128,10 @@ class RoadGraphVisualizer {
         setActiveBtn(btnOsm);
       });
     }
-    if (btnCarto) {
-      btnCarto.addEventListener('click', () => {
-        this.switchTileLayer('carto');
-        setActiveBtn(btnCarto);
+    if (btnStreets) {
+      btnStreets.addEventListener('click', () => {
+        this.switchTileLayer('streets');
+        setActiveBtn(btnStreets);
       });
     }
     if (btnSat) {
@@ -199,25 +199,24 @@ class RoadGraphVisualizer {
     // Add sleek custom zoom control top-right so it never clashes with the HUD
     L.control.zoom({ position: 'topright' }).addTo(this.map);
 
-    // Tile Layer Definitions - Default to high-speed CDN CartoDB Voyager
+        // Tile Layer Definitions - 100% Free, Zero API Keys Required
     this.tileLayers = {
-      carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 19,
-        attribution: '&copy; CARTO'
-      }),
       osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors'
       }),
+      streets: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: '&copy; Esri &mdash; Street Map'
+      }),
       sat: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
-        attribution: 'Esri, Maxar, Earthstar Geographics'
+        attribution: '&copy; Esri, Maxar, Earthstar Geographics'
       })
     };
 
-    // Default to CartoDB Voyager for instantaneous sub-100ms loading
-    this.currentTileLayer = this.tileLayers.carto.addTo(this.map);
+    // Default to OpenStreetMap Standard (no API key required, zero watermarks)
+    this.currentTileLayer = this.tileLayers.osm.addTo(this.map);
 
     // Layer Groups for organized rendering
     this.baseRoadsLayer = L.layerGroup().addTo(this.map);
