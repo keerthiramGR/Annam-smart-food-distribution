@@ -20,3 +20,4 @@ echo ========================================================
 echo   Starting Annam Interactive Terminal (Multi-Role)...
 echo ========================================================
 java -cp bin com.annam.Main
+
