@@ -59,13 +59,26 @@ app.use((err, req, res, next) => {
 
 // Start server
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`=======================================================`);
     console.log(`🍛 Annam - Smart Food Distribution Server running!`);
     console.log(`🌐 Local URL: http://localhost:${PORT}`);
     console.log(`📦 Node.js: ${process.version}`);
     console.log(`⚡ Ready for Donor, Recipient, and Super Admin actions`);
     console.log(`=======================================================`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`\n=======================================================`);
+      console.log(`⚠️  PORT ${PORT} IS ALREADY IN USE BY ANOTHER PROCESS!`);
+      console.log(`🌐 The Annam website is ALREADY running at: http://localhost:${PORT}`);
+      console.log(`💡 To free port ${PORT}, run in terminal: npx kill-port ${PORT}`);
+      console.log(`=======================================================\n`);
+      process.exit(0);
+    } else {
+      console.error('[Annam Server Error]:', err);
+    }
   });
 }
 
