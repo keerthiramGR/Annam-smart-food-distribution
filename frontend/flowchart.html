@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How the Annam Website Works - Updated System Architecture</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .chart-container {
+      max-width: 1200px;
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      padding: 2.5rem 2rem;
+    }
+    .main-title {
+      text-align: center;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0f172a;
+      margin-bottom: 2rem;
+    }
+    
+    /* SECTION LAYERS */
+    .layer-card {
+      border-radius: 14px;
+      padding: 1.75rem 1.5rem 1.5rem;
+      position: relative;
+      margin-bottom: 2.25rem;
+    }
+    .layer-tag {
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: inherit;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      border-radius: 4px;
+    }
+
+    /* BROWSER LAYER */
+    .browser-layer {
+      border: 2px dashed #93c5fd;
+      background: #f8fbff;
+    }
+    .browser-layer .layer-tag {
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+    .gateway-box {
+      border: 2px solid #2563eb;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.1rem 1.5rem;
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 1.75rem;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    }
+    .gateway-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1d4ed8;
+      letter-spacing: 0.02em;
+    }
+    .gateway-sub {
+      font-size: 0.85rem;
+      color: #475569;
+      margin-top: 0.35rem;
+      font-weight: 500;
+    }
+
+    /* 4 PORTALS GRID */
+    .portals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    .portal-box {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .portal-donor {
+      border: 2px solid #16a34a;
+    }
+    .portal-recip {
+      border: 2px solid #d97706;
+    }
+    .portal-admin {
+      border: 2px solid #dc2626;
+    }
+    .portal-driver {
+      border: 2px solid #0284c7;
+    }
+
+    .portal-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .portal-donor .portal-title { color: #15803d; }
+    .portal-recip .portal-title { color: #b45309; }
+    .portal-admin .portal-title { color: #b91c1c; }
+    .portal-driver .portal-title { color: #0369a1; }
+
+    .portal-subhead {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 0.4rem;
+    }
+    .portal-list {
+      list-style: none;
+      font-size: 0.75rem;
+      color: #475569;
+      line-height: 1.45;
+      margin-bottom: 0.8rem;
+    }
+    .portal-list li::before {
+      content: "• ";
+      color: #94a3b8;
+      font-weight: bold;
+    }
+    .portal-footer {
+      margin-top: auto;
+      font-size: 0.75rem;
+      color: #334155;
+      padding-top: 0.5rem;
+      border-top: 1px dashed #e2e8f0;
+      line-height: 1.35;
+    }
+
+    /* CONNECTOR ARROW ROW */
+    .connector-row {
+      display: flex;
+      justify-content: space-around;
+      margin: -1.25rem 0;
+      position: relative;
+      z-index: 2;
+    }
+    .arrow-down {
+      font-size: 1.4rem;
+      color: #64748b;
+      font-weight: 900;
+    }
+
+    /* EXPRESS API LAYER */
+    .api-layer {
+      background: #fff7ed;
+      border: 2px solid #fdba74;
+    }
+    .api-layer .layer-tag {
+      background: #ffedd5;
+      color: #c2410c;
+      border: 1px solid #fed7aa;
+    }
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    .api-box {
+      background: #ffffff;
+      border: 1.5px solid #fed7aa;
+      border-radius: 10px;
+      padding: 1.1rem;
+      box-shadow: 0 2px 6px rgba(194, 65, 12, 0.05);
+    }
+    .api-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #9a3412;
+      margin-bottom: 0.5rem;
+      font-family: monospace;
+    }
+    .api-desc {
+      font-size: 0.78rem;
+      color: #475569;
+      line-height: 1.5;
+    }
+
+    /* SERVICES & DATA LAYER */
+    .services-layer {
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+    }
+    .services-layer .layer-tag {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    .service-box {
+      background: #ffffff;
+      border: 1.5px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 1.1rem;
+      box-shadow: 0 2px 6px rgba(21, 128, 61, 0.05);
+    }
+    .service-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #166534;
+      margin-bottom: 0.5rem;
+      font-family: monospace;
+    }
+    .service-desc {
+      font-size: 0.77rem;
+      color: #475569;
+      line-height: 1.5;
+    }
+
+    /* OUTPUT BANNER */
+    .output-bar {
+      border: 2px solid #0f172a;
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+    .output-flow {
+      color: #2563eb;
+    }
+
+    @media (max-width: 900px) {
+      .portals-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .api-grid, .services-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chart-container">
+    <div class="main-title">
+      HOW THE ANNAM WEBSITE WORKS — SCREENS AND THE DETAILS ASKED (UPDATED)
+    </div>
+
+    <!-- BROWSER LAYER -->
+    <div class="layer-card browser-layer">
+      <div class="layer-tag">BROWSER (FRONTEND CLIENT)</div>
+
+      <!-- 1. HOME PAGE - ROLE GATEWAY -->
+      <div class="gateway-box">
+        <div class="gateway-title">1. HOME PAGE — 4-DOOR ROLE GATEWAY</div>
+        <div class="gateway-sub">User selects a role: Food Donor | Recipient Shelter | Super Administrator | Delivery Driver</div>
+      </div>
+
+      <!-- 4 PORTALS -->
+      <div class="portals-grid">
+        <!-- 2a. DONOR PORTAL -->
+        <div class="portal-box portal-donor">
+          <div class="portal-title">2a. DONOR PORTAL</div>
+          <div class="portal-subhead">Details asked:</div>
+          <ul class="portal-list">
+            <li>Donor / kitchen entity</li>
+            <li>Food name and category</li>
+            <li>Number of portions</li>
+            <li>Quality condition</li>
+            <li>Shelf-life (hours) → use-by</li>
+            <li>Dietary type & storage</li>
+            <li>Pickup location (Erode)</li>
+          </ul>
+          <div class="portal-footer">
+            <strong>Shows:</strong> Donation listing status (Pending / Approved)
+          </div>
+        </div>
+
+        <!-- 2b. RECIPIENT PORTAL -->
+        <div class="portal-box portal-recip">
+          <div class="portal-title">2b. RECIPIENT PORTAL</div>
+          <div class="portal-subhead">Details asked:</div>
+          <ul class="portal-list">
+            <li>Recipient organization (shelter / care home)</li>
+            <li>Approved food batch chosen</li>
+            <li>Portions required</li>
+            <li>Delivery instructions</li>
+          </ul>
+          <div class="portal-footer">
+            <strong>Shows:</strong> Approved batches, Dijkstra road route & km, booking tracking, ETA
+          </div>
+        </div>
+
+        <!-- 2c. ADMIN CONSOLE -->
+        <div class="portal-box portal-admin">
+          <div class="portal-title">2c. ADMIN CONSOLE</div>
+          <div class="portal-subhead">Decisions / inputs:</div>
+          <ul class="portal-list">
+            <li>Approve / reject donation</li>
+            <li>Approve / reject booking</li>
+            <li>Run multi-criteria check</li>
+            <li>Confirm & lock allocation</li>
+            <li>1-click fleet dispatch</li>
+          </ul>
+          <div class="portal-footer">
+            <strong>Shows:</strong> Review queues, fleet status, Erode road map & Dijkstra polyline
+          </div>
+        </div>
+
+        <!-- 2d. DRIVER PORTAL -->
+        <div class="portal-box portal-driver">
+          <div class="portal-title">2d. DRIVER PORTAL</div>
+          <div class="portal-subhead">Decisions / inputs:</div>
+          <ul class="portal-list">
+            <li>Select active fleet vehicle</li>
+            <li>Mark food picked up & depart</li>
+            <li>Confirm delivery handover</li>
+          </ul>
+          <div class="portal-footer">
+            <strong>Shows:</strong> Active mission card, Stop 1 Pickup, Stop 2 Drop-off, live GPS turn-by-turn HUD
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARROWS -->
+    <div class="connector-row">
+      <span class="arrow-down">↕</span>
+      <span class="arrow-down">↕</span>
+      <span class="arrow-down">↕</span>
+      <span class="arrow-down">↕</span>
+    </div>
+
+    <!-- EXPRESS API LAYER -->
+    <div class="layer-card api-layer">
+      <div class="layer-tag">EXPRESS.JS REST API BACKEND (/api)</div>
+      <div class="api-grid">
+        <div class="api-box">
+          <div class="api-title">donationRoutes • authRoutes</div>
+          <div class="api-desc">
+            • Receive donor listing form<br/>
+            • Validate use-by time & portions<br/>
+            • Self-registration for new donors & shelters
+          </div>
+        </div>
+        <div class="api-box">
+          <div class="api-title">bookingRoutes • vehicleRoutes</div>
+          <div class="api-desc">
+            • Receive portion booking requests<br/>
+            • Fleet vehicle registry (Tata Ace EV, etc.)<br/>
+            • Filter bookings by shelter ID
+          </div>
+        </div>
+        <div class="api-box">
+          <div class="api-title">adminRoutes • routingRoutes</div>
+          <div class="api-desc">
+            • Safety review & allocation decisions<br/>
+            • Driver delivery handover status update<br/>
+            • Erode 15-sector Dijkstra shortest paths
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARROWS -->
+    <div class="connector-row">
+      <span class="arrow-down">↕</span>
+      <span class="arrow-down">↕</span>
+      <span class="arrow-down">↕</span>
+    </div>
+
+    <!-- SERVICES + DATA LAYER -->
+    <div class="layer-card services-layer">
+      <div class="layer-tag">SERVICES + DATA REPOSITORY</div>
+      <div class="services-grid">
+        <div class="service-box">
+          <div class="service-title">allocationService.js</div>
+          <div class="service-desc">
+            1. <strong>FEFO:</strong> earliest use-by first<br/>
+            2. <strong>Donation approved?</strong> (Admin verified)<br/>
+            3. <strong>Stock sufficient?</strong> (demanded ≤ avail)<br/>
+            4. <strong>Vehicle available + capacity?</strong><br/>
+            5. <strong>Deadline met?</strong> (transit ≤ shelf-life)
+          </div>
+        </div>
+        <div class="service-box">
+          <div class="service-title">dijkstraService.js</div>
+          <div class="service-desc">
+            • Least-time & shortest km route on the <strong>15-location weighted Erode graph</strong> (graphData.js)<br/>
+            • 24 real road segments (SH 96, NH 544)<br/>
+            • Travel time divided by vehicle speed factor<br/>
+            • Continuous GPS polyline waypoints
+          </div>
+        </div>
+        <div class="service-box">
+          <div class="service-title">repository.js • initialData.js</div>
+          <div class="service-desc">
+            • In-memory fast datastore records: 5 donors, 12 shelters, food batches, bookings, vehicles<br/>
+            • Stock deducted atomically only after every feasibility check passes<br/>
+            • Immutable audit event logger
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ARROWS -->
+    <div class="connector-row" style="margin-bottom:0.75rem;">
+      <span class="arrow-down">↓</span>
+    </div>
+
+    <!-- OUTPUT BANNER -->
+    <div class="output-bar">
+      OUTPUT TO THE SCREENS: 
+      <span class="output-flow">
+        allocation status ➔ Dijkstra route &amp; ETA ➔ stock balance ➔ live driver GPS navigation ➔ delivery confirmation
+      </span>
+    </div>
+  </div>
+
+</body>
+</html>
